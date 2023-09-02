@@ -42,6 +42,10 @@ Other notable tech
 - [ ] Clean up landing page (possible hero only)
 - [ ] Added a logger to track user flow
 
+## Bugs to fix
+- [ ] Playlist generation fails if more than 100 songs are going to be added at once
+- [ ] Mobile UI drawer open button is above from search field
+
 ## Lessons learned from the project
 
 - Working with multiple different APIs

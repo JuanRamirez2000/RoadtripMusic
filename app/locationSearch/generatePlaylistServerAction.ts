@@ -13,8 +13,6 @@ export default async function generatePlaylist(
   playlistName = "roadtripMusic"
 ) {
   try {
-    console.log("started");
-
     //* Authenticate the user
     const session = await getServerSession(authOptions);
     const access_token = session?.accessToken;
@@ -75,14 +73,12 @@ export default async function generatePlaylist(
     if (playlistCreationStatus !== 201) {
       throw "Failed to create playlist";
     }
-    //Changed status code to 201 from 200
     const trackURIs = totalTracks.map((track) => track.uri);
     const shuffledURIs = shuffleTracks(trackURIs);
     await api.post(`/playlists/${playlist.id}/tracks`, {
       uris: shuffledURIs,
     });
 
-    console.log("done");
     return { status: "OK" };
   } catch (error) {
     console.error(error);
