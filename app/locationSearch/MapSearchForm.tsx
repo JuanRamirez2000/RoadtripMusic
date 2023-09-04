@@ -1,15 +1,20 @@
 "use client";
 import { useMapStore } from "contexts/mapStore";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useRef } from "react";
 import PlacesSearch from "./PlacesSearch";
 import generatePlaylist from "./generatePlaylistServerAction";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { toast } from "react-toastify";
+import {
+  Cog8ToothIcon,
+  PlusCircleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 export default function MapSearchForm() {
   const mapData = useMapStore((state) => state);
   const setRenderDirection = useMapStore((state) => state.setRenderDirection);
   const [showLoadingState, setShowLoadingState] = useState<boolean>(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,19 +69,41 @@ export default function MapSearchForm() {
               <p className="text-xl">{mapData.totalTime.text}</p>
             </div>
             <button
-              className="btn-secondary btn"
+              className="btn-secondary btn-block btn"
               onClick={() => void handlePlaylistGeneration()}
             >
-              Generate Songs
+              Generate Playlist
+              <PlusCircleIcon className="h-6 w-6" />
             </button>
+            <button
+              className="btn-secondary btn-block btn"
+              onClick={() => dialogRef.current?.showModal()}
+            >
+              Spotify Options
+              <Cog8ToothIcon className="h-6 w-6" />
+            </button>
+            <dialog ref={dialogRef} className="modal ">
+              <form method="dialog" className=" modal-box h-4/5 max-w-5xl">
+                <button className="btn-ghost btn-circle btn absolute right-2 top-2">
+                  <XMarkIcon className="h-10 w-10 text-error" />
+                </button>
+                <h3 className="text-2xl font-semibold tracking-tight lg:text-4xl">
+                  Spotify Settings
+                </h3>
+                <div></div>
+              </form>
+              <form method="dialog" className="modal-backdrop">
+                <button>close</button>
+              </form>
+            </dialog>
           </>
         ) : (
           <></>
         )}
         {showLoadingState && (
           <button className="btn-secondary btn">
-            <ArrowPathIcon className="h-6 w-6 animate-spin-slow" />
-            <p>GeneratingSongs</p>
+            <span className="loading loading-spinner"></span>
+            Generating Playlist
           </button>
         )}
       </div>

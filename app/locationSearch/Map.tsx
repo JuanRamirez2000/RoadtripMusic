@@ -100,7 +100,7 @@ export default function Map() {
     };
   }, [mapData.destination, map]);
 
-  return <div className="h-full" ref={ref} />;
+  return <div className="-z-10 h-full" ref={ref} />;
 }
 
 function calculateAndDisplayRoute(

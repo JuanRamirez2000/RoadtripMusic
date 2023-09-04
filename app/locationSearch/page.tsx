@@ -9,7 +9,7 @@ export default function LocationsSearchPage() {
       <div className="drawer-content h-screen">
         <label
           htmlFor="maps-drawer"
-          className="absolute left-2 top-2 z-10 rounded-lg bg-emerald-400 px-4 py-3 text-emerald-900 lg:hidden"
+          className="absolute left-2 top-2 z-0 rounded-lg bg-emerald-400 px-4 py-3 text-emerald-900 lg:hidden"
         >
           Search Locations
         </label>
