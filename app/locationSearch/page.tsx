@@ -18,7 +18,7 @@ export default function LocationsSearchPage() {
       {/* Sidebar content here */}
       <div className="drawer-side z-20">
         <label htmlFor="maps-drawer" className="drawer-overlay"></label>
-        <div className="h-screen bg-base-100">
+        <div className="h-screen bg-base-100 py-10">
           <MapSearchForm />
         </div>
       </div>

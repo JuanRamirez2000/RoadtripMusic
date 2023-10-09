@@ -3,12 +3,12 @@ import { getServerSession } from "next-auth/next";
 import Link from "next/link";
 import { authOptions } from "./api/auth/[...nextauth]/route";
 import type { Route } from "next";
-import Image from "next/image";
 import {
   MapIcon,
   MusicalNoteIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
+import HeroImage from "./HeroImage";
 
 export const metadata: Metadata = {
   title: "Roadtrip Music",
@@ -22,13 +22,7 @@ const Home = async () => {
       {/* Hero Section */}
       <div className="hero min-h-screen ">
         <div className="hero-content flex-col lg:flex-row-reverse ">
-          <div className="relative h-64 w-64 rounded-lg md:h-96 md:w-96">
-            <Image
-              src={"/assets/svgs/carOnRoadTrip.svg"}
-              alt="Hero Image"
-              fill
-            />
-          </div>
+          <HeroImage />
           <div className="flex flex-col items-center gap-4 text-center md:gap-8">
             <h1 className="text-4xl  font-semibold tracking-tighter md:text-7xl md:font-bold">
               Roadtrip music

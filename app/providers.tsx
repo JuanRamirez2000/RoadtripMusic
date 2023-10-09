@@ -5,6 +5,8 @@ import { Wrapper } from "@googlemaps/react-wrapper";
 import { env } from "env.mjs";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useEffect } from "react";
+import { themeChange } from "theme-change";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -14,6 +16,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       },
     },
   });
+
+  useEffect(() => {
+    themeChange(false);
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <Wrapper apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS} libraries={["places"]}>

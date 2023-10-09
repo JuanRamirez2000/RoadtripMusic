@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MapData } from "types/GoogleMaps";
 import { useMapStore } from "contexts/mapStore";
+import { useNightModeStore } from "contexts/themeStore";
 //https://developers.google.com/maps/documentation/javascript/directions
 
 export default function Map() {
@@ -15,6 +16,7 @@ export default function Map() {
   const distanceMatrixService = new google.maps.DistanceMatrixService();
   const setDistanceData = useMapStore((state) => state.setTotalTime);
   const mapData = useMapStore((state) => state);
+  const nightMode = useNightModeStore((state) => state.nightMode);
 
   useEffect(() => {
     //Make a new map
@@ -46,6 +48,7 @@ export default function Map() {
     return () => {
       directionsRenderer.setMap(null);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     ref,
     map,
@@ -54,6 +57,30 @@ export default function Map() {
     mapData.destination,
     setDistanceData,
   ]);
+
+  //This use effect only changes the way the map looks based on light and dark mode
+  useEffect(() => {
+    if (ref.current && map) {
+      const mapOptions: google.maps.MapOptions = {
+        center: map.getCenter(),
+        zoom: map.getZoom(),
+        mapTypeControl: false,
+        streetViewControl: false,
+      };
+
+      if (nightMode) {
+        setMap(
+          new google.maps.Map(ref.current, {
+            ...mapOptions,
+            styles: mapsNightMode,
+          })
+        );
+      } else {
+        setMap(new google.maps.Map(ref.current, mapOptions));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nightMode]);
 
   useEffect(() => {
     const infoWindow = new google.maps.InfoWindow({

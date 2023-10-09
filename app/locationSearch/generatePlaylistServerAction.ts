@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-"use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "app/api/auth/[...nextauth]/route";
+//import { authOptions } from "app/api/auth/[...nextauth]/route";
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
+import { getSession } from "next-auth/react";
 
 const BASE_URL = "https://api.spotify.com/v1";
 const MS_TO_S_CONVERSION = 1000;
+const TRACK_AMOUNT_PER_RECOMMENDATION = 10;
 
 export default async function generatePlaylist(
   travelTime: number,
@@ -14,7 +14,7 @@ export default async function generatePlaylist(
 ) {
   try {
     //* Authenticate the user
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     const access_token = session?.accessToken;
 
     if (!access_token) {
@@ -27,10 +27,10 @@ export default async function generatePlaylist(
         Authorization: `Bearer ${access_token}`,
       },
     });
-    //If authenticated, generatea playlist
+    //If authenticated, generate a playlist
     //API Call to grab top tracks
     const {
-      data: spotifyTrackRecommendationsResponse,
+      data: spotifyTopTracksResponse,
     }: AxiosResponse<SpotifyApi.UsersTopTracksResponse> = await api.get(
       "/me/top/tracks"
     );
@@ -38,12 +38,9 @@ export default async function generatePlaylist(
     //* Grabbing recommendations based on the top track URIs
     //Checks if the travelTime meets the playlist time
     const totalTracks: SpotifyApi.TrackObjectFull[] = [];
-    totalTracks.push(...spotifyTrackRecommendationsResponse.items);
+    totalTracks.push(...spotifyTopTracksResponse.items);
     while (!checkIfPlaylistIsLongerThanMaxTime(totalTracks, travelTime)) {
-      const newTracks = await generateTracks(
-        spotifyTrackRecommendationsResponse,
-        api
-      );
+      const newTracks = await generateTracks(spotifyTopTracksResponse, api);
       if (newTracks) {
         totalTracks.push(
           ...(newTracks as unknown as SpotifyApi.TrackObjectFull[])
@@ -107,12 +104,10 @@ const findDuplicatePlaylist = async (
 
 //Generates tracks for a user based on the current track list
 const generateTracks = async (
-  spotifyTrackRecommendationsResponse: SpotifyApi.UsersTopTracksResponse,
+  spotifyTopTracksResponse: SpotifyApi.UsersTopTracksResponse,
   api: AxiosInstance
 ): Promise<SpotifyApi.RecommendationTrackObject[] | undefined> => {
-  const trackIDs = spotifyTrackRecommendationsResponse.items.map(
-    (track) => track.id
-  );
+  const trackIDs = spotifyTopTracksResponse.items.map((track) => track.id);
 
   for (let i = 0; i < trackIDs.length / 2; i += 2) {
     const {
@@ -124,7 +119,7 @@ const generateTracks = async (
         params: {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           seed_tracks: `${trackIDs[i]!},${trackIDs[i + 1]!}`,
-          limit: 4,
+          limit: TRACK_AMOUNT_PER_RECOMMENDATION,
         },
       }
     );

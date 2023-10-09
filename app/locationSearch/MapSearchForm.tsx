@@ -4,11 +4,8 @@ import { useState, type FormEvent, useRef } from "react";
 import PlacesSearch from "./PlacesSearch";
 import generatePlaylist from "./generatePlaylistServerAction";
 import { toast } from "react-toastify";
-import {
-  Cog8ToothIcon,
-  PlusCircleIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { Cog8ToothIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
+import { SpotifyOptionsModal } from "./SpotifyOptionsModal";
 
 export default function MapSearchForm() {
   const mapData = useMapStore((state) => state);
@@ -25,6 +22,8 @@ export default function MapSearchForm() {
 
   const handlePlaylistGeneration = async () => {
     setShowLoadingState(true);
+    //! TODO - Make it so that it is round trip or one way
+    //! TODO - Add different options for spotify playlist
     const { status } = await generatePlaylist(mapData.totalTime.value);
     setShowLoadingState(false);
     if (status === "OK") {
@@ -82,20 +81,7 @@ export default function MapSearchForm() {
               Spotify Options
               <Cog8ToothIcon className="h-6 w-6" />
             </button>
-            <dialog ref={dialogRef} className="modal ">
-              <form method="dialog" className=" modal-box h-4/5 max-w-5xl">
-                <button className="btn-ghost btn-circle btn absolute right-2 top-2">
-                  <XMarkIcon className="h-10 w-10 text-error" />
-                </button>
-                <h3 className="text-2xl font-semibold tracking-tight lg:text-4xl">
-                  Spotify Settings
-                </h3>
-                <div></div>
-              </form>
-              <form method="dialog" className="modal-backdrop">
-                <button>close</button>
-              </form>
-            </dialog>
+            <SpotifyOptionsModal ref={dialogRef} />
           </>
         ) : (
           <></>
