@@ -2,16 +2,12 @@ import { type Config } from "tailwindcss";
 
 export default {
   content: ["./app/**/*.{js,ts,jsx,tsx,mdx}"],
+  darkMode: 'class',
   theme: {
     extend: {
       animation: {
         "spin-slow": "spin 3s linear infinite",
       },
     },
-  },
-  plugins: [require("daisyui")],
-  daisyui: {
-    themes: ["emerald", "night"],
-    darkTheme: "night",
   },
 } satisfies Config;

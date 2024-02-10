@@ -9,9 +9,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <ThemeToggleSwitch />
-        <Providers>{children}</Providers>
+      <body className="bg-slate-100 dark:bg-slate-800">
+        <Providers>
+          <ThemeToggleSwitch />
+          {children}
+        </Providers>
       </body>
     </html>
   );
