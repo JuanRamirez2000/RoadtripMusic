@@ -1,6 +1,3 @@
-import Map from "./Map";
-import MapSearchForm from "./MapSearchForm";
-
 export default function LocationsSearchPage() {
   return (
     <div className="drawer lg:drawer-open">
@@ -13,14 +10,11 @@ export default function LocationsSearchPage() {
         >
           Search Locations
         </label>
-        <Map />
       </div>
       {/* Sidebar content here */}
       <div className="drawer-side z-20">
         <label htmlFor="maps-drawer" className="drawer-overlay"></label>
-        <div className="h-screen bg-base-100 py-10">
-          <MapSearchForm />
-        </div>
+        <div className="h-screen bg-base-100 py-10"></div>
       </div>
     </div>
   );
