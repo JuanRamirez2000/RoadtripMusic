@@ -1,12 +1,11 @@
 import type { Session, NextAuthOptions } from "next-auth";
 import NextAuth from "next-auth/next";
 import SpotifyProvider from "next-auth/providers/spotify";
-import { env } from "env.mjs";
 import axios from "axios";
 import type { JWT } from "next-auth/jwt";
 
-const CLIENT_ID = env.SPOTIFY_CLIENT_ID;
-const CLIENT_SECRET = env.SPOTIFY_CLIENT_SECRET;
+const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID as string;
+const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET as string;
 const SPOTIFY_REFRESH_TOKEN_URL = "https://accounts.spotify.com/api/token";
 const scope =
   "user-read-email,user-read-private,user-top-read,user-read-currently-playing,playlist-modify-public,playlist-modify-private";
@@ -84,7 +83,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
 
-  secret: env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
