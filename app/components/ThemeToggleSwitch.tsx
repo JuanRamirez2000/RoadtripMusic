@@ -2,9 +2,17 @@
 import { Transition } from "@headlessui/react";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export default function ThemeToggleSwitch() {
+  const [mounted, setMounted] = useState<boolean>(false);
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
     <div className="absolute left-4 top-2 z-50">
