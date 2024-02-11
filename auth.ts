@@ -1,5 +1,5 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
-import Spotify from "next-auth/providers/spotify";
+import Spotify from "@auth/core/providers/spotify";
 
 export const {
   handlers: { GET, POST },
