@@ -2,7 +2,7 @@
 const config = {
   reactStrictMode: true,
   experimental: {
-    typedRoutes: true,
+    //typedRoutes: true,
   },
 };
 export default config;

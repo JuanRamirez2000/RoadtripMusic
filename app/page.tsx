@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth/next";
-import Link from "next/link";
-import { authOptions } from "./api/auth/[...nextauth]/route";
+//import Link from "next/link"
 import HeroImage from "./HeroImage";
+//import { auth } from "auth";
+import { SignIn } from "./components/AuthComponents";
 
 export const metadata: Metadata = {
   title: "Roadtrip Music",
   description: "An ai based music generator for roadtrips!",
 };
 
-const Home = async () => {
-  const session = await getServerSession(authOptions);
+function Home() {
+  //const session = await auth();
   return (
     <main>
       {/* Hero Section */}
@@ -24,8 +24,8 @@ const Home = async () => {
             <p className="w-64 text-xl tracking-tight md:w-96">
               An AI powered playlist generator for roadtrips!
             </p>
-
-            {!!session ? (
+            <SignIn />
+            {/* !!session ? (
               <Link
                 className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 md:w-64"
                 href={"/locationSearch"}
@@ -39,12 +39,12 @@ const Home = async () => {
               >
                 Sign in to spotify
               </Link>
-            )}
+            )*/}
           </div>
         </div>
       </div>
     </main>
   );
-};
+}
 
 export default Home;
