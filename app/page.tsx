@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-//import Link from "next/link"
+import Link from "next/link";
 import HeroImage from "./HeroImage";
-//import { auth } from "auth";
+import { auth } from "auth";
 import { SignIn } from "./components/AuthComponents";
 
 export const metadata: Metadata = {
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description: "An ai based music generator for roadtrips!",
 };
 
-function Home() {
-  //const session = await auth();
+async function Home() {
+  const session = await auth();
   return (
     <main>
       {/* Hero Section */}
@@ -25,7 +25,7 @@ function Home() {
               An AI powered playlist generator for roadtrips!
             </p>
             <SignIn />
-            {/* !!session ? (
+            {!!session ? (
               <Link
                 className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 md:w-64"
                 href={"/locationSearch"}
@@ -39,7 +39,7 @@ function Home() {
               >
                 Sign in to spotify
               </Link>
-            )*/}
+            )}
           </div>
         </div>
       </div>
