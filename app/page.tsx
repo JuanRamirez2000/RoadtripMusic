@@ -24,7 +24,6 @@ async function Home() {
             <p className="w-64 text-xl tracking-tight md:w-96">
               An AI powered playlist generator for roadtrips!
             </p>
-            <SignIn />
             {!!session ? (
               <Link
                 className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 md:w-64"
@@ -33,12 +32,7 @@ async function Home() {
                 Get Started
               </Link>
             ) : (
-              <Link
-                className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 md:w-64"
-                href={"/api/auth/signin"}
-              >
-                Sign in to spotify
-              </Link>
+              <SignIn />
             )}
           </div>
         </div>
