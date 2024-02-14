@@ -31,23 +31,23 @@ export default function ThemeToggleSwitch() {
       <label className="relative z-10 cursor-pointer" htmlFor="toggle-light">
         <Transition
           show={theme === "light"}
-          enter="transition-opacity duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="transition-opacity duration-150"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
+          enter="transform transition duration-[400ms]"
+          enterFrom="opacity-0 rotate-[-120deg] scale-50"
+          enterTo="opacity-100 rotate-0 scale-100"
+          leave="transform duration-200 transition ease-in-out"
+          leaveFrom="opacity-100 rotate-0 scale-100 "
+          leaveTo="opacity-0 scale-95 "
         >
           <SunIcon className={`h-10 w-10 dark:hidden`} />
         </Transition>
         <Transition
           show={theme === "dark"}
-          enter="transition-opacity duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="transition-opacity duration-150"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
+          enter="transform transition duration-[400ms]"
+          enterFrom="opacity-0 rotate-[-120deg] scale-50"
+          enterTo="opacity-100 rotate-0 scale-100"
+          leave="transform duration-200 transition ease-in-out"
+          leaveFrom="opacity-100 rotate-0 scale-100 "
+          leaveTo="opacity-0 scale-95 "
         >
           <MoonIcon className="hidden h-10 w-10 dark:block" />
         </Transition>

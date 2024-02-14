@@ -18,7 +18,7 @@ export default function MapContainer() {
       style={{ width: "100%", height: "100%" }}
       mapStyle={
         theme === "light"
-          ? "mapbox://styles/mapbox/streets-v9"
+          ? "mapbox://styles/mapbox/light-v11"
           : "mapbox://styles/mapbox/dark-v11"
       }
     />
