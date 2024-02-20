@@ -1,8 +1,8 @@
-import {
-  Marker,
-  useControl,
-  type ControlPosition,
-  type MarkerProps,
+import { Marker, useControl, useMap } from "react-map-gl";
+import type {
+  ViewStateChangeEvent,
+  ControlPosition,
+  MarkerProps,
 } from "react-map-gl";
 import MapboxGeocoder, {
   type GeocoderOptions,
@@ -25,12 +25,20 @@ export default function GeocodeControl({
   defaultMarker = true,
 }: GeocoderControlProps) {
   const [marker, setMarker] = useState<ReactElement | null>(null);
+  const { current: map } = useMap();
 
   useControl<MapboxGeocoder>(
     () => {
       const control = new MapboxGeocoder({
         marker: false,
         accessToken: mapboxAccessToken,
+      });
+
+      map?.on("moveend", (event: ViewStateChangeEvent) => {
+        control.setProximity({
+          longitude: event.viewState.longitude,
+          latitude: event.viewState.latitude,
+        });
       });
 
       control.on("result", (evt) => {
