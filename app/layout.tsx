@@ -2,6 +2,7 @@ import ThemeToggleSwitch from "./components/ThemeToggleSwitch";
 import "./globals.css";
 import Providers from "./providers";
 import "mapbox-gl/dist/mapbox-gl.css";
+import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 export default function RootLayout({
   children,
@@ -10,7 +11,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-slate-100/80 dark:bg-zinc-800">
+      <body className="bg-slate-100 dark:bg-zinc-800">
         <Providers>
           <ThemeToggleSwitch />
           {children}

@@ -12,7 +12,9 @@ Frontend Tech
 
 - ReactJS
 - TypescriptJS
-- Google Maps API
+- MapboxAPI
+- React Map GL JS
+- DeckGL
 
 Backend tech
 
