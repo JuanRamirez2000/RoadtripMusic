@@ -7,7 +7,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  debug: true,
+  debug: false,
   providers: [Spotify],
   pages: {
     signIn: "/login",
