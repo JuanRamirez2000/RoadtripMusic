@@ -1,6 +1,7 @@
 "use server";
 
 import type { SearchBoxFeatureSuggestion } from "@mapbox/search-js-core";
+import type { RetrieveDirectionsResponse } from "types/mapboxDirections";
 
 const MAPBOX_DIRECTIONS_URL_BASE = "https://api.mapbox.com/directions/v5/";
 const MAPBOX_ACCESS_TOKEN = process.env
@@ -41,7 +42,7 @@ const findDirectionsBase = async ({
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await directionsRes.json();
+    return (await directionsRes.json()) as RetrieveDirectionsResponse;
   } catch (err) {
     console.error(err);
   }
