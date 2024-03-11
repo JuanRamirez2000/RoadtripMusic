@@ -16,11 +16,16 @@ import type { SearchBoxFeatureSuggestion } from "@mapbox/search-js-core";
 import { findDirectionsBase } from "app/actions/findDirections";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import type { LineString } from "geojson";
+import generatePlaylist from "app/actions/generatePlaylistServerAction";
+{
+  /* 
 import {
   ArrowUpRightIcon,
   MapIcon,
   MusicalNoteIcon,
 } from "@heroicons/react/24/outline";
+*/
+}
 
 const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
@@ -60,6 +65,15 @@ export default function MapContainer() {
     }
   };
 
+  const handleGeneratePlaylist = async () => {
+    try {
+      const res = await generatePlaylist();
+      console.log(res);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const routeLayer = new GeoJsonLayer({
     id: "route-layer",
     data: routeData,
@@ -75,8 +89,6 @@ export default function MapContainer() {
       <div className="flex h-full w-1/4 flex-col items-center pt-24">
         {/*This needs to be a form at some point for now this is fine */}
         <div className="flex w-3/4 flex-col gap-12">
-          {" "}
-          {/* 
           <SearchBox
             accessToken={MAPBOX_ACCESS_TOKEN}
             value={originSearch}
@@ -105,8 +117,8 @@ export default function MapContainer() {
             mapboxgl={mapboxgl}
             marker
           />
-            */}
           <div className="flex flex-col gap-6">
+            {/* 
             <ul className="flex w-full justify-between">
               <li className="inline-flex flex-row rounded-lg bg-rose-500 p-2 ">
                 <button>
@@ -124,6 +136,7 @@ export default function MapContainer() {
                 </button>
               </li>
             </ul>
+                */}
             <button
               className={`rounded-lg px-3 py-2.5 ${
                 originData && destinationData ? "bg-rose-600" : "bg-slate-600"
@@ -141,6 +154,9 @@ export default function MapContainer() {
               className={`rounded-lg px-3 py-2.5 ${
                 routeData ? "bg-rose-600" : "bg-slate-600"
               }`}
+              onClick={async () => {
+                await handleGeneratePlaylist();
+              }}
               disabled={!routeData}
               type="button"
             >

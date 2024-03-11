@@ -1,80 +1,115 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-//import { authOptions } from "app/api/auth/[...nextauth]/route";
-import axios, { type AxiosInstance, type AxiosResponse } from "axios";
-import { getSession } from "next-auth/react";
+"use server";
+import { auth } from "auth";
 
 const BASE_URL = "https://api.spotify.com/v1";
 const MS_TO_S_CONVERSION = 1000;
-const TRACK_AMOUNT_PER_RECOMMENDATION = 10;
+const TRACK_AMOUNT_PER_RECOMMENDATION = 5;
 
 export default async function generatePlaylist(
-  travelTime: number,
+  travelTime = 2400 * 2,
   playlistName = "roadtripMusic"
 ) {
   try {
     //* Authenticate the user
-    const session = await getSession();
+    const session = await auth();
+
     const access_token = session?.accessToken;
 
     if (!access_token) {
       throw "No access token found";
     }
-    const api = axios.create({
-      baseURL: BASE_URL,
-      timeout: 10000,
+
+    const spotifyTopTracksResponse = await fetch(BASE_URL + "/me/top/tracks", {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
     });
-    //If authenticated, generate a playlist
-    //API Call to grab top tracks
-    const {
-      data: spotifyTopTracksResponse,
-    }: AxiosResponse<SpotifyApi.UsersTopTracksResponse> = await api.get(
-      "/me/top/tracks"
-    );
+
+    if (!spotifyTopTracksResponse.ok) {
+      throw new Error("Couldnt grab users top tracks");
+    }
+
+    console.log("User top tracks found");
+
+    const userTopTracks: SpotifyApi.UsersTopTracksResponse =
+      (await spotifyTopTracksResponse.json()) as SpotifyApi.UsersTopTracksResponse;
 
     //* Grabbing recommendations based on the top track URIs
-    //Checks if the travelTime meets the playlist time
     const totalTracks: SpotifyApi.TrackObjectFull[] = [];
-    totalTracks.push(...spotifyTopTracksResponse.items);
+    totalTracks.push(...userTopTracks.items);
     while (!checkIfPlaylistIsLongerThanMaxTime(totalTracks, travelTime)) {
-      const newTracks = await generateTracks(spotifyTopTracksResponse, api);
+      console.log(totalTracks.length);
+      const newTracks = await generateTracks(userTopTracks, access_token);
       if (newTracks) {
         totalTracks.push(
-          ...(newTracks as unknown as SpotifyApi.TrackObjectFull[])
+          ...(newTracks.tracks as unknown as SpotifyApi.TrackObjectFull[])
         );
       }
     }
 
-    //* Deleting a playlist by the provided name if it already exists on the user
-    const duplicatePlaylist = await findDuplicatePlaylist(api, playlistName);
+    console.log("Finished recommendations");
+
+    ////* Deleting a playlist by the provided name if it already exists on the user
+    const duplicatePlaylist = await findDuplicatePlaylist(
+      playlistName,
+      access_token
+    );
     if (duplicatePlaylist) {
-      await api.delete(`/playlists/${duplicatePlaylist.id}/followers`);
+      await fetch(`${BASE_URL}/playlists/${duplicatePlaylist.id}/followers`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
     }
 
+    console.log("Done checking if the user has a duplicate playlist");
+
+    const createPlaylistParams = new URLSearchParams({
+      name: playlistName,
+    }).toString();
+
     //* Create a playlist for the user with the provided name
-    const {
-      data: playlist,
-      status: playlistCreationStatus,
-    }: AxiosResponse<SpotifyApi.CreatePlaylistResponse> = await api.post(
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      `/users/${session.user?.id}/playlists`,
+    const createPlaylistReponse = await fetch(
+      `${BASE_URL}/users/${
+        session.user?.id as string
+      }/playlists?${createPlaylistParams}`,
       {
-        name: playlistName,
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
       }
     );
 
-    //* Add songs to the playlist
-    if (playlistCreationStatus !== 201) {
-      throw "Failed to create playlist";
+    if (!createPlaylistReponse.ok) {
+      throw new Error("Failed to create the playlist for the user");
     }
+
+    console.log("Created user's playlist");
+
+    ////* Add songs to the playlist
+    const playlist =
+      (await createPlaylistReponse.json()) as SpotifyApi.CreatePlaylistResponse;
     const trackURIs = totalTracks.map((track) => track.uri);
-    const shuffledURIs = shuffleTracks(trackURIs);
-    await api.post(`/playlists/${playlist.id}/tracks`, {
-      uris: shuffledURIs,
-    });
+    //const shuffledURIs = shuffleTracks(trackURIs);
+    const populatePlaylistParams = new URLSearchParams({
+      uris: trackURIs.join(),
+    }).toString();
+    const populatePlaylistResponse = await fetch(
+      `${BASE_URL}/playlists/${playlist.id}/tracks?${populatePlaylistParams}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
+
+    if (!populatePlaylistResponse.ok) {
+      throw new Error("Failed to populate playlist");
+    }
+
+    console.log("Done populating playlist");
 
     return { status: "OK" };
   } catch (error) {
@@ -82,49 +117,30 @@ export default async function generatePlaylist(
     return { status: "Error" };
   }
 }
-
-//Finds duplicate playlist in a user's profile
-const findDuplicatePlaylist = async (
-  api: AxiosInstance,
-  playlistName: string
-): Promise<SpotifyApi.PlaylistObjectSimplified | undefined> => {
-  const {
-    data: userPlaylists,
-  }: AxiosResponse<SpotifyApi.ListOfCurrentUsersPlaylistsResponse> =
-    await api.get("/me/playlists");
-  if (userPlaylists) {
-    const duplicatePlaylist = userPlaylists.items.find(
-      (playlist) => playlist.name === playlistName
-    );
-    if (duplicatePlaylist) {
-      return duplicatePlaylist;
-    }
-  }
-};
-
 //Generates tracks for a user based on the current track list
 const generateTracks = async (
   spotifyTopTracksResponse: SpotifyApi.UsersTopTracksResponse,
-  api: AxiosInstance
-): Promise<SpotifyApi.RecommendationTrackObject[] | undefined> => {
+  access_token: string
+): Promise<SpotifyApi.RecommendationsObject | undefined> => {
   const trackIDs = spotifyTopTracksResponse.items.map((track) => track.id);
 
   for (let i = 0; i < trackIDs.length / 2; i += 2) {
-    const {
-      data: recommendedTrack,
-      status,
-    }: AxiosResponse<SpotifyApi.RecommendationsObject> = await api.get(
-      "/recommendations",
+    const params = new URLSearchParams({
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      seed_tracks: `${trackIDs[i]!},${trackIDs[i + 1]!}`,
+      limit: TRACK_AMOUNT_PER_RECOMMENDATION.toString(),
+    }).toString();
+
+    const trackRecommendationResponse = await fetch(
+      `${BASE_URL}/recommendations?${params}`,
       {
-        params: {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          seed_tracks: `${trackIDs[i]!},${trackIDs[i + 1]!}`,
-          limit: TRACK_AMOUNT_PER_RECOMMENDATION,
+        headers: {
+          Authorization: `Bearer ${access_token}`,
         },
       }
     );
-    if (status === 200) {
-      return recommendedTrack.tracks;
+    if (trackRecommendationResponse.status === 200) {
+      return (await trackRecommendationResponse.json()) as SpotifyApi.RecommendationsObject;
     }
   }
 };
@@ -137,6 +153,7 @@ const checkIfPlaylistIsLongerThanMaxTime = (
   const currentTime = tracks.reduce((acc, track) => {
     return acc + track.duration_ms / MS_TO_S_CONVERSION;
   }, 0);
+
   if (currentTime > travelTime) {
     return true;
   }
@@ -145,4 +162,29 @@ const checkIfPlaylistIsLongerThanMaxTime = (
 
 const shuffleTracks = (tracks: string[]) => {
   return tracks.sort(() => Math.random() - 0.5);
+};
+
+//Finds duplicate playlist in a user's profile
+const findDuplicatePlaylist = async (
+  playlistName: string,
+  access_token: string
+): Promise<SpotifyApi.PlaylistObjectSimplified | undefined> => {
+  const userPlaylistRequest = await fetch(BASE_URL + "/me/playlists", {
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+    },
+  });
+  if (!userPlaylistRequest.ok) {
+    throw new Error("Failed finding the users current playlists");
+  }
+
+  const userCurrentPlaylists =
+    (await userPlaylistRequest.json()) as SpotifyApi.ListOfCurrentUsersPlaylistsResponse;
+
+  const duplicatePlaylist = userCurrentPlaylists.items.find(
+    (playlist) => playlist.name === playlistName
+  );
+  if (duplicatePlaylist) {
+    return duplicatePlaylist;
+  }
 };
