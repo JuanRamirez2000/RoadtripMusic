@@ -1,3 +1,5 @@
+//https://www.reddit.com/r/nextjs/comments/10o6aup/next_auth_spotify_reauthentication_access_token/
+
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Spotify from "@auth/core/providers/spotify";
 import type { JWT } from "next-auth/jwt";
@@ -16,18 +18,16 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       `${AUTH_SPOTIFY_ID}:${AUTH_SPOTIFY_SECRET}`
     ).toString("base64");
 
-    const refreshTokenParams = new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: token.refreshToken as string,
-    }).toString();
-
-    const refreshTokenReponse = await fetch(`${SPOTIFY_REFRESH_TOKEN_URL}`, {
+    const refreshTokenReponse = await fetch(SPOTIFY_REFRESH_TOKEN_URL, {
       method: "POST",
       headers: {
         Authorization: `Basic ${basicAuth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: refreshTokenParams,
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: token.refreshToken as string,
+      }),
     });
 
     if (!refreshTokenReponse.ok) {
@@ -40,7 +40,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       ...token,
       accessToken: data.access_token,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      accessTokenExpires: Math.floor(Date.now() + data.expires_in! * 1000),
+      accessTokenExpires: Math.floor(Date.now() / data.expires_in! + 1000),
       refreshToken: data.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
@@ -79,8 +79,9 @@ export const {
           refreshToken: account.refresh_token,
           accessTokenExpires: Math.floor(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            Date.now() / 1000 + account.expires_in!
+            account.expires_at! * 1000
           ),
+          user,
         };
       }
       if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
@@ -91,6 +92,9 @@ export const {
     },
     session({ session, token }) {
       session.accessToken = token.accessToken;
+      session.error = token.error;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      session.user = token.user;
       return session;
     },
   },

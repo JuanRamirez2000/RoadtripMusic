@@ -5,10 +5,7 @@ const BASE_URL = "https://api.spotify.com/v1";
 const MS_TO_S_CONVERSION = 1000;
 const TRACK_AMOUNT_PER_RECOMMENDATION = 2;
 
-export default async function generatePlaylist(
-  travelTime = 2400 * 2,
-  playlistName = "roadtripMusic"
-) {
+async function grabSongsForPlaylist(travelTime = 2400 * 2) {
   try {
     //* Authenticate the user
     const session = await auth();
@@ -19,19 +16,6 @@ export default async function generatePlaylist(
       throw new Error("No access token found");
     }
 
-    const grabUserResponse = await fetch(BASE_URL + "/me", {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
-
-    if (!grabUserResponse.ok) {
-      throw new Error("Failed grabbing current user");
-    }
-
-    const currentUser =
-      (await grabUserResponse.json()) as SpotifyApi.UserObjectPublic;
-
     const spotifyTopTracksResponse = await fetch(BASE_URL + "/me/top/tracks", {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -39,6 +23,7 @@ export default async function generatePlaylist(
     });
 
     if (!spotifyTopTracksResponse.ok) {
+      console.log(await spotifyTopTracksResponse.json());
       throw new Error("Couldnt grab users top tracks");
     }
 
@@ -57,7 +42,41 @@ export default async function generatePlaylist(
       }
     }
 
-    ////* Deleting a playlist by the provided name if it already exists on the user
+    const trackURIs = totalTracks.map((track) => track.uri);
+
+    return { status: "OK", songs: trackURIs };
+  } catch (error) {
+    console.error(error);
+    return { status: "Error", songs: null };
+  }
+}
+
+const generatePlaylist = async (
+  playlistName = "Roadtrip Music",
+  trackURIs: string[]
+) => {
+  try {
+    const session = await auth();
+
+    const access_token = session?.accessToken;
+
+    if (!access_token) {
+      throw new Error("No access token found");
+    }
+
+    const grabUserResponse = await fetch(BASE_URL + "/me", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
+
+    if (!grabUserResponse.ok) {
+      throw new Error("Failed grabbing current user");
+    }
+    const currentUser =
+      (await grabUserResponse.json()) as SpotifyApi.UserObjectPublic;
+
+    //* Deleting a playlist by the provided name if it already exists on the user
     const duplicatePlaylist = await findDuplicatePlaylist(
       playlistName,
       access_token
@@ -92,10 +111,9 @@ export default async function generatePlaylist(
       throw new Error("Failed to create the playlist for the user");
     }
 
-    ////* Add songs to the playlist
+    //* Add songs to the playlist
     const playlist =
       (await createPlaylistReponse.json()) as SpotifyApi.CreatePlaylistResponse;
-    const trackURIs = totalTracks.map((track) => track.uri);
 
     //const shuffledURIs = shuffleTracks(trackURIs);
 
@@ -116,13 +134,11 @@ export default async function generatePlaylist(
     if (!populatePlaylistResponse.ok) {
       throw new Error("Failed to populate playlist");
     }
-
-    return { status: "OK" };
   } catch (error) {
-    console.error(error);
-    return { status: "Error" };
+    throw new Error("Failed generating playlist");
   }
-}
+};
+
 //Generates tracks for a user based on the current track list
 const generateTracks = async (
   spotifyTopTracksResponse: SpotifyApi.UsersTopTracksResponse,
@@ -166,9 +182,11 @@ const checkIfPlaylistIsLongerThanMaxTime = (
   return false;
 };
 
+/* 
 const shuffleTracks = (tracks: string[]) => {
   return tracks.sort(() => Math.random() - 0.5);
 };
+*/
 
 //Finds duplicate playlist in a user's profile
 const findDuplicatePlaylist = async (
@@ -194,3 +212,5 @@ const findDuplicatePlaylist = async (
     return duplicatePlaylist;
   }
 };
+
+export { grabSongsForPlaylist, generatePlaylist };

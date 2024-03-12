@@ -16,7 +16,10 @@ import type { SearchBoxFeatureSuggestion } from "@mapbox/search-js-core";
 import { findDirectionsBase } from "app/actions/findDirections";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import type { LineString } from "geojson";
-import generatePlaylist from "app/actions/generatePlaylistServerAction";
+import {
+  grabSongsForPlaylist,
+  generatePlaylist,
+} from "app/actions/generatePlaylistServerAction";
 
 const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
@@ -38,6 +41,8 @@ export default function MapContainer() {
 
   const [routeData, setRouteData] = useState<LineString>();
   const [durationData, setDurationData] = useState<RouteDuration | null>(null);
+
+  const [spotifySongURIs, setSpotifySongURIs] = useState<string[] | null>(null);
 
   if (!MAPBOX_ACCESS_TOKEN) return <h1>Error Loading</h1>;
   if (!mapRef) return <h1>Loading...</h1>;
@@ -62,6 +67,22 @@ export default function MapContainer() {
         duration: routes[0]?.duration as number,
         distance: routes[0]?.distance as number,
       });
+
+      //* Clear out everything
+      setSpotifySongURIs(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const hangleGrabSongs = async () => {
+    try {
+      if (!durationData) return;
+
+      const res = await grabSongsForPlaylist(durationData.duration);
+      if (res.songs) {
+        setSpotifySongURIs(res.songs);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -69,9 +90,9 @@ export default function MapContainer() {
 
   const handleGeneratePlaylist = async () => {
     try {
-      if (!durationData) return;
+      if (!spotifySongURIs) return;
 
-      await generatePlaylist(durationData.duration, "Testing");
+      await generatePlaylist("roadtripMusic", spotifySongURIs);
     } catch (err) {
       console.error(err);
     }
@@ -140,12 +161,25 @@ export default function MapContainer() {
               }`}
               // eslint-disable-next-line @typescript-eslint/no-misused-promises
               onClick={async () => {
-                await handleGeneratePlaylist();
+                await hangleGrabSongs();
               }}
               disabled={!routeData}
               type="button"
             >
               Grab Songs
+            </button>
+            <button
+              className={`rounded-lg px-3 py-2.5 ${
+                spotifySongURIs ? "bg-rose-600" : "bg-slate-600"
+              }`}
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
+              onClick={async () => {
+                await handleGeneratePlaylist();
+              }}
+              disabled={!spotifySongURIs}
+              type="button"
+            >
+              Save Playlist
             </button>
           </div>
         </div>
