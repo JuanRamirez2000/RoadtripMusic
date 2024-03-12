@@ -3,7 +3,7 @@ import { auth } from "auth";
 
 const BASE_URL = "https://api.spotify.com/v1";
 const MS_TO_S_CONVERSION = 1000;
-const TRACK_AMOUNT_PER_RECOMMENDATION = 5;
+const TRACK_AMOUNT_PER_RECOMMENDATION = 2;
 
 export default async function generatePlaylist(
   travelTime = 2400 * 2,
@@ -16,8 +16,21 @@ export default async function generatePlaylist(
     const access_token = session?.accessToken;
 
     if (!access_token) {
-      throw "No access token found";
+      throw new Error("No access token found");
     }
+
+    const grabUserResponse = await fetch(BASE_URL + "/me", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
+
+    if (!grabUserResponse.ok) {
+      throw new Error("Failed grabbing current user");
+    }
+
+    const currentUser =
+      (await grabUserResponse.json()) as SpotifyApi.UserObjectPublic;
 
     const spotifyTopTracksResponse = await fetch(BASE_URL + "/me/top/tracks", {
       headers: {
@@ -29,8 +42,6 @@ export default async function generatePlaylist(
       throw new Error("Couldnt grab users top tracks");
     }
 
-    console.log("User top tracks found");
-
     const userTopTracks: SpotifyApi.UsersTopTracksResponse =
       (await spotifyTopTracksResponse.json()) as SpotifyApi.UsersTopTracksResponse;
 
@@ -38,7 +49,6 @@ export default async function generatePlaylist(
     const totalTracks: SpotifyApi.TrackObjectFull[] = [];
     totalTracks.push(...userTopTracks.items);
     while (!checkIfPlaylistIsLongerThanMaxTime(totalTracks, travelTime)) {
-      console.log(totalTracks.length);
       const newTracks = await generateTracks(userTopTracks, access_token);
       if (newTracks) {
         totalTracks.push(
@@ -46,8 +56,6 @@ export default async function generatePlaylist(
         );
       }
     }
-
-    console.log("Finished recommendations");
 
     ////* Deleting a playlist by the provided name if it already exists on the user
     const duplicatePlaylist = await findDuplicatePlaylist(
@@ -63,21 +71,20 @@ export default async function generatePlaylist(
       });
     }
 
-    console.log("Done checking if the user has a duplicate playlist");
-
-    const createPlaylistParams = new URLSearchParams({
-      name: playlistName,
-    }).toString();
-
     //* Create a playlist for the user with the provided name
     const createPlaylistReponse = await fetch(
-      `${BASE_URL}/users/${
-        session.user?.id as string
-      }/playlists?${createPlaylistParams}`,
+      `${BASE_URL}/users/${currentUser.id}/playlists`,
       {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          name: playlistName,
+          public: "true",
+          description: "Playlist made with code",
+        }),
       }
     );
 
@@ -85,16 +92,17 @@ export default async function generatePlaylist(
       throw new Error("Failed to create the playlist for the user");
     }
 
-    console.log("Created user's playlist");
-
     ////* Add songs to the playlist
     const playlist =
       (await createPlaylistReponse.json()) as SpotifyApi.CreatePlaylistResponse;
     const trackURIs = totalTracks.map((track) => track.uri);
+
     //const shuffledURIs = shuffleTracks(trackURIs);
+
     const populatePlaylistParams = new URLSearchParams({
       uris: trackURIs.join(),
     }).toString();
+
     const populatePlaylistResponse = await fetch(
       `${BASE_URL}/playlists/${playlist.id}/tracks?${populatePlaylistParams}`,
       {
@@ -108,8 +116,6 @@ export default async function generatePlaylist(
     if (!populatePlaylistResponse.ok) {
       throw new Error("Failed to populate playlist");
     }
-
-    console.log("Done populating playlist");
 
     return { status: "OK" };
   } catch (error) {

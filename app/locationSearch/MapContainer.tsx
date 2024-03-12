@@ -17,29 +17,27 @@ import { findDirectionsBase } from "app/actions/findDirections";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import type { LineString } from "geojson";
 import generatePlaylist from "app/actions/generatePlaylistServerAction";
-{
-  /* 
-import {
-  ArrowUpRightIcon,
-  MapIcon,
-  MusicalNoteIcon,
-} from "@heroicons/react/24/outline";
-*/
-}
 
 const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+type RouteDuration = {
+  distance: number;
+  duration: number;
+};
 
 export default function MapContainer() {
   const { theme } = useTheme();
   const mapRef = useRef<MapRef>(null);
+
   const [originSearch, setOriginSearch] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
   const [originData, setOriginData] =
     useState<SearchBoxFeatureSuggestion | null>(null);
-
   const [destinationData, setDestinationData] =
     useState<SearchBoxFeatureSuggestion | null>(null);
+
   const [routeData, setRouteData] = useState<LineString>();
+  const [durationData, setDurationData] = useState<RouteDuration | null>(null);
 
   if (!MAPBOX_ACCESS_TOKEN) return <h1>Error Loading</h1>;
   if (!mapRef) return <h1>Loading...</h1>;
@@ -60,6 +58,10 @@ export default function MapContainer() {
       const { routes } = directions;
 
       setRouteData(routes[0]?.geometry);
+      setDurationData({
+        duration: routes[0]?.duration as number,
+        distance: routes[0]?.distance as number,
+      });
     } catch (err) {
       console.error(err);
     }
@@ -67,8 +69,9 @@ export default function MapContainer() {
 
   const handleGeneratePlaylist = async () => {
     try {
-      const res = await generatePlaylist();
-      console.log(res);
+      if (!durationData) return;
+
+      await generatePlaylist(durationData.duration, "Testing");
     } catch (err) {
       console.error(err);
     }
@@ -118,25 +121,6 @@ export default function MapContainer() {
             marker
           />
           <div className="flex flex-col gap-6">
-            {/* 
-            <ul className="flex w-full justify-between">
-              <li className="inline-flex flex-row rounded-lg bg-rose-500 p-2 ">
-                <button>
-                  <MapIcon className="size-8" />
-                </button>
-              </li>
-              <li className="inline-flex flex-row rounded-lg bg-rose-500 p-2 ">
-                <button>
-                  <MusicalNoteIcon className="size-8" />
-                </button>
-              </li>
-              <li className="inline-flex flex-row rounded-lg bg-rose-500 p-2 ">
-                <button>
-                  <ArrowUpRightIcon className="size-8" />
-                </button>
-              </li>
-            </ul>
-                */}
             <button
               className={`rounded-lg px-3 py-2.5 ${
                 originData && destinationData ? "bg-rose-600" : "bg-slate-600"
@@ -154,6 +138,7 @@ export default function MapContainer() {
               className={`rounded-lg px-3 py-2.5 ${
                 routeData ? "bg-rose-600" : "bg-slate-600"
               }`}
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
               onClick={async () => {
                 await handleGeneratePlaylist();
               }}

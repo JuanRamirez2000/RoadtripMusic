@@ -1,6 +1,7 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Spotify from "@auth/core/providers/spotify";
 import type { JWT } from "next-auth/jwt";
+import { type TokenSet } from "@auth/core/types";
 
 const AUTH_SPOTIFY_ID = process.env.AUTH_SPOTIFY_ID as string;
 const AUTH_SPOTIFY_SECRET = process.env.AUTH_SPOTIFY_SECRET as string;
@@ -8,13 +9,6 @@ const AUTH_SPOTIFY_SECRET = process.env.AUTH_SPOTIFY_SECRET as string;
 const scope =
   "user-read-email,user-read-private,user-top-read,user-read-currently-playing,playlist-modify-public,playlist-modify-private";
 const SPOTIFY_REFRESH_TOKEN_URL = "https://accounts.spotify.com/api/token";
-
-type RefreshTokenResponse = {
-  access_token: string;
-  token_type: "Bearer";
-  scope: string;
-  expires_in: number;
-};
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
@@ -27,27 +21,27 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       refresh_token: token.refreshToken as string,
     }).toString();
 
-    const refreshTokenReponse = await fetch(
-      `${SPOTIFY_REFRESH_TOKEN_URL}?${refreshTokenParams}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${basicAuth}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
+    const refreshTokenReponse = await fetch(`${SPOTIFY_REFRESH_TOKEN_URL}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basicAuth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: refreshTokenParams,
+    });
 
     if (!refreshTokenReponse.ok) {
       throw new Error("Failed to refresh access token");
     }
 
-    const data = (await refreshTokenReponse.json()) as RefreshTokenResponse;
+    const data = (await refreshTokenReponse.json()) as TokenSet;
 
     return {
       ...token,
       accessToken: data.access_token,
-      accessTokenExpires: Date.now() + data.expires_in * 1000,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      accessTokenExpires: Math.floor(Date.now() + data.expires_in! * 1000),
+      refreshToken: data.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
     return {
@@ -83,9 +77,10 @@ export const {
         return {
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          accessTokenExpires: account.expires_at! * 1000,
-          user,
+          accessTokenExpires: Math.floor(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            Date.now() / 1000 + account.expires_in!
+          ),
         };
       }
       if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
@@ -96,7 +91,6 @@ export const {
     },
     session({ session, token }) {
       session.accessToken = token.accessToken;
-      //session.user = token.user as Session["user"];
       return session;
     },
   },
