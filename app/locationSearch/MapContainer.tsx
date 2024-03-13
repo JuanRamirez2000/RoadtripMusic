@@ -1,5 +1,6 @@
 "use client";
-import { SearchBox } from "@mapbox/search-js-react";
+//! This will be added back when the library is more stable
+//import { SearchBox } from "@mapbox/search-js-react";
 import { useTheme } from "next-themes";
 import { useRef, useState } from "react";
 import {
@@ -12,7 +13,10 @@ import {
 import mapboxgl from "mapbox-gl";
 import DeckGLOverlay from "./DeckGLOverlay";
 import type { MapRef } from "react-map-gl";
-import type { SearchBoxFeatureSuggestion } from "@mapbox/search-js-core";
+import type {
+  SearchBoxFeatureSuggestion,
+  SearchBoxRetrieveResponse,
+} from "@mapbox/search-js-core";
 import { findDirectionsBase } from "app/actions/findDirections";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import type { LineString } from "geojson";
@@ -20,6 +24,19 @@ import {
   grabSongsForPlaylist,
   generatePlaylist,
 } from "app/actions/generatePlaylistServerAction";
+
+import dynamic from "next/dynamic";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+const SearchBox = dynamic(
+  () =>
+    import("@mapbox/search-js-react").then(
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      /* eslint-disable @typescript-eslint/no-unsafe-return */
+      (module) => module.AddressAutofill as any
+    ),
+  { ssr: false }
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+) as any;
 
 const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
@@ -117,8 +134,10 @@ export default function MapContainer() {
             accessToken={MAPBOX_ACCESS_TOKEN}
             value={originSearch}
             onChange={setOriginSearch}
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            onRetrieve={(res) => setOriginData(res.features[0]!)}
+            onRetrieve={(res: SearchBoxRetrieveResponse) =>
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              setOriginData(res.features[0]!)
+            }
             options={{
               proximity: mapRef.current?.getMap().getCenter(),
             }}
@@ -131,8 +150,10 @@ export default function MapContainer() {
             accessToken={MAPBOX_ACCESS_TOKEN}
             value={destinationSearch}
             onChange={setDestinationSearch}
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            onRetrieve={(res) => setDestinationData(res.features[0]!)}
+            onRetrieve={(res: SearchBoxRetrieveResponse) =>
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              setDestinationData(res.features[0]!)
+            }
             options={{
               proximity: mapRef.current?.getMap().getCenter(),
             }}
