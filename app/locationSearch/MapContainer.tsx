@@ -130,6 +130,7 @@ export default function MapContainer() {
       <div className="flex h-full w-1/4 flex-col items-center pt-24">
         {/*This needs to be a form at some point for now this is fine */}
         <div className="flex w-3/4 flex-col gap-12">
+          {/* 
           <SearchBox
             accessToken={MAPBOX_ACCESS_TOKEN}
             value={originSearch}
@@ -162,6 +163,7 @@ export default function MapContainer() {
             mapboxgl={mapboxgl}
             marker
           />
+            */}
           <div className="flex flex-col gap-6">
             <button
               className={`rounded-lg px-3 py-2.5 ${
