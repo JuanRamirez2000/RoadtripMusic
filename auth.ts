@@ -40,7 +40,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       ...token,
       accessToken: data.access_token,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      accessTokenExpires: Math.floor(Date.now() / data.expires_in! + 1000),
+      accessTokenExpires: Date.now() + data.expires_in! * 1000,
       refreshToken: data.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
@@ -77,10 +77,9 @@ export const {
         return {
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
-          accessTokenExpires: Math.floor(
+          accessTokenExpires:
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            account.expires_at! * 1000
-          ),
+            account.expires_at! * 1000,
           user,
         };
       }
