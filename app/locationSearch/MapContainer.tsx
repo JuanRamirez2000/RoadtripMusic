@@ -32,7 +32,7 @@ const SearchBox = dynamic(
     import("@mapbox/search-js-react").then(
       /* eslint-disable @typescript-eslint/no-explicit-any */
       /* eslint-disable @typescript-eslint/no-unsafe-return */
-      (module) => module.AddressAutofill as any
+      (module) => module.SearchBox as any
     ),
   { ssr: false }
   /* eslint-disable @typescript-eslint/no-explicit-any */
