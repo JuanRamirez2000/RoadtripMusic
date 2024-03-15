@@ -24,8 +24,13 @@ import {
   grabSongsForPlaylist,
   generatePlaylist,
 } from "app/actions/generatePlaylistServerAction";
-
 import dynamic from "next/dynamic";
+import {
+  ArrowDownTrayIcon,
+  MapIcon,
+  MusicalNoteIcon,
+} from "@heroicons/react/24/outline";
+import { toast } from "react-toastify";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
   () =>
@@ -74,8 +79,12 @@ export default function MapContainer() {
         destination: destinationData,
       });
 
-      if (!directions)
+      if (!directions) {
+        toast.error("Finding directions failed D:", {
+          theme: theme === "light" ? "light" : "dark",
+        });
         throw new Error("Failed grabbing directions from backend");
+      }
 
       const { routes } = directions;
 
@@ -87,7 +96,13 @@ export default function MapContainer() {
 
       //* Clear out everything
       setSpotifySongURIs(null);
+      toast.success("Found directions!", {
+        theme: theme === "light" ? "light" : "dark",
+      });
     } catch (err) {
+      toast.error("An error occured finding directions", {
+        theme: theme === "light" ? "light" : "dark",
+      });
       console.error(err);
     }
   };
@@ -100,7 +115,20 @@ export default function MapContainer() {
       if (res.songs) {
         setSpotifySongURIs(res.songs);
       }
+      if (res.status === "Ok") {
+        toast.success("Generated some music!", {
+          theme: theme === "light" ? "light" : "dark",
+        });
+      }
+      if (res.status === "Error") {
+        toast.error("Music generation failed D:", {
+          theme: theme === "light" ? "light" : "dark",
+        });
+      }
     } catch (err) {
+      toast.error("Some error occured generating music", {
+        theme: theme === "light" ? "light" : "dark",
+      });
       console.error(err);
     }
   };
@@ -110,6 +138,9 @@ export default function MapContainer() {
       if (!spotifySongURIs) return;
 
       await generatePlaylist("roadtripMusic", spotifySongURIs);
+      toast("Playlist Done!", {
+        theme: theme === "light" ? "light" : "dark",
+      });
     } catch (err) {
       console.error(err);
     }
@@ -162,9 +193,9 @@ export default function MapContainer() {
             mapboxgl={mapboxgl}
             marker
           />
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-row justify-between gap-4">
             <button
-              className={`rounded-lg px-3 py-2.5 ${
+              className={`rounded-lg p-3 ${
                 originData && destinationData ? "bg-rose-600" : "bg-slate-600"
               }`}
               disabled={!(originData && destinationData)}
@@ -174,10 +205,10 @@ export default function MapContainer() {
               }}
               type="button"
             >
-              Find Directions
+              <MapIcon className="h-9 w-9" />
             </button>
             <button
-              className={`rounded-lg px-3 py-2.5 ${
+              className={`rounded-lg p-3 ${
                 routeData ? "bg-rose-600" : "bg-slate-600"
               }`}
               // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -187,10 +218,10 @@ export default function MapContainer() {
               disabled={!routeData}
               type="button"
             >
-              Grab Songs
+              <MusicalNoteIcon className="h-9 w-9" />
             </button>
             <button
-              className={`rounded-lg px-3 py-2.5 ${
+              className={`rounded-lg p-3 ${
                 spotifySongURIs ? "bg-rose-600" : "bg-slate-600"
               }`}
               // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -200,7 +231,7 @@ export default function MapContainer() {
               disabled={!spotifySongURIs}
               type="button"
             >
-              Save Playlist
+              <ArrowDownTrayIcon className="h-9 w-9" />
             </button>
           </div>
         </div>

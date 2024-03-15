@@ -44,7 +44,7 @@ async function grabSongsForPlaylist(travelTime = 2400 * 2) {
 
     const trackURIs = totalTracks.map((track) => track.uri);
 
-    return { status: "OK", songs: trackURIs };
+    return { status: "Ok", songs: trackURIs };
   } catch (error) {
     console.error(error);
     return { status: "Error", songs: null };
