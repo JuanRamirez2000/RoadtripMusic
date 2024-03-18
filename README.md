@@ -34,14 +34,25 @@ Other notable tech
 - [x] Safe user logins with OAUTH2
 - [x] Users allowed to select the destinations
 - [x] Playlist saves onto user's spotify account
+- [x] Create a light and dark mode
+- [ ] Show the songs on the map itself
+- [ ] Users should be able to delete songs on the playlist 
+- [ ] Song cards should link to the preview
+- [ ] Add settings for the playlist
     - [ ] Users should be allowed to change the name of the playlist
-- [ ] Users should be able select the playlist spotify uses to find recommendations
-- [ ] Create a light and dark mode
+    - [ ] Users should be able to change the source playlist/artists for the recommendation system
+    - [ ] Users should be able to add some "extra time" to the playlist
+- [ ] Add settings for the map
+    - [ ] Make it so that users can add more than one destination
+    - [ ] Make it so that users can change their driving method
+    - [ ] Look at MapBox directions API to see other useful options
+
+
 
 ## Changes and optimizations needed
-- [ ] Clean up the API calls in the backend
-- [ ] Clean up map code
-- [ ] Clean up landing page (possible hero only)
+- [x] Clean up the API calls in the backend
+- [x] Clean up map code
+- [x] Clean up landing page (possible hero only)
 - [ ] Added a logger to track user flow
 
 ## Bugs to fix
