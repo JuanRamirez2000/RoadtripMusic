@@ -19,7 +19,7 @@ async function Home() {
           <HeroImage />
           <div className="flex flex-col items-center gap-4 text-center md:gap-8">
             <h1 className="text-4xl font-semibold tracking-tighter md:text-7xl md:font-bold">
-              Roadtrip music
+              Roadify
             </h1>
             <p className="w-64 text-xl tracking-tight md:w-96">
               An AI powered playlist generator for roadtrips!
