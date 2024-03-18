@@ -4,5 +4,12 @@ const config = {
   experimental: {
     //typedRoutes: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        hostname: "i.scdn.co",
+      },
+    ],
+  },
 };
 export default config;

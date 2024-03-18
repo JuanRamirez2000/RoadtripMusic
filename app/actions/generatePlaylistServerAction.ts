@@ -5,7 +5,7 @@ const BASE_URL = "https://api.spotify.com/v1";
 const MS_TO_S_CONVERSION = 1000;
 const TRACK_AMOUNT_PER_RECOMMENDATION = 2;
 
-async function grabSongsForPlaylist(travelTime = 2400 * 2) {
+const grabSongsForPlaylist = async (travelTime = 2400 * 2) => {
   try {
     //* Authenticate the user
     const session = await auth();
@@ -42,14 +42,12 @@ async function grabSongsForPlaylist(travelTime = 2400 * 2) {
       }
     }
 
-    const trackURIs = totalTracks.map((track) => track.uri);
-
-    return { status: "Ok", songs: trackURIs };
+    return { status: "Ok", songs: totalTracks };
   } catch (error) {
     console.error(error);
     return { status: "Error", songs: null };
   }
-}
+};
 
 const generatePlaylist = async (
   playlistName = "Roadtrip Music",

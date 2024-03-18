@@ -66,7 +66,9 @@ export default function MapContainer() {
   const [routeData, setRouteData] = useState<LineString>();
   const [durationData, setDurationData] = useState<RouteDuration | null>(null);
 
-  const [spotifySongURIs, setSpotifySongURIs] = useState<string[] | null>(null);
+  const [spotifyTracks, setSpotifyTracks] = useState<
+    SpotifyApi.TrackObjectFull[] | null
+  >(null);
 
   if (!MAPBOX_ACCESS_TOKEN) return <h1>Error Loading</h1>;
   if (!mapRef) return <h1>Loading...</h1>;
@@ -97,7 +99,7 @@ export default function MapContainer() {
       });
 
       //* Clear out everything
-      setSpotifySongURIs(null);
+      setSpotifyTracks(null);
       toast.success("Found directions!", {
         theme: theme === "light" ? "light" : "dark",
       });
@@ -115,7 +117,7 @@ export default function MapContainer() {
 
       const res = await grabSongsForPlaylist(durationData.duration);
       if (res.songs) {
-        setSpotifySongURIs(res.songs);
+        setSpotifyTracks(res.songs);
       }
       if (res.status === "Ok") {
         toast.success("Generated some music!", {
@@ -137,9 +139,11 @@ export default function MapContainer() {
 
   const handleGeneratePlaylist = async () => {
     try {
-      if (!spotifySongURIs) return;
+      if (!spotifyTracks) return;
 
-      await generatePlaylist("roadtripMusic", spotifySongURIs);
+      const trackURIs = spotifyTracks.map((track) => track.uri);
+
+      await generatePlaylist("roadtripMusic", trackURIs);
       toast("Playlist Done!", {
         theme: theme === "light" ? "light" : "dark",
       });
@@ -169,7 +173,7 @@ export default function MapContainer() {
 
   return (
     <section className="flex h-full w-full flex-row">
-      <div className="flex h-full w-1/5 flex-col items-center pt-24">
+      <div className="flex h-full w-1/5 flex-col items-center overflow-y-auto py-24">
         {/*This needs to be a form at some point for now this is fine */}
         <div className="flex w-3/4 flex-col items-center gap-12">
           <SearchBox
@@ -223,7 +227,7 @@ export default function MapContainer() {
           {!!durationData && (
             <>
               <div className=" inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-slate-50 p-5 dark:bg-zinc-700">
-                <GiPathDistance className="h-9 w-9 text-emerald-500 dark:text-rose-600" />
+                <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-rose-600" />
                 <div className="px-2.5">
                   <h2 className="text-sm text-slate-700 dark:text-zinc-300">
                     Duration
@@ -234,7 +238,8 @@ export default function MapContainer() {
                 </div>
               </div>
               <div className="inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-slate-50 p-5 dark:bg-zinc-700">
-                <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-rose-600" />
+                <GiPathDistance className="h-9 w-9 text-emerald-500 dark:text-rose-600" />
+
                 <div className="px-2.5">
                   <h2 className="text-sm text-slate-700 dark:text-zinc-300">
                     Distance
@@ -259,6 +264,49 @@ export default function MapContainer() {
               >
                 <MusicalNoteIcon className="h-7 w-7" />
                 <p className="text-lg">Make Playlist</p>
+              </button>
+            </>
+          )}
+          {!!spotifyTracks && (
+            <>
+              <ul className="flex w-full max-w-72 flex-col gap-5">
+                {spotifyTracks.map((track) => {
+                  return (
+                    <li
+                      key={track.id}
+                      className="rounded-lg bg-slate-50 p-5 dark:bg-zinc-700"
+                    >
+                      <p className="truncate text-2xl font-semibold text-emerald-500 dark:text-rose-600">
+                        {track.name}
+                      </p>
+                      <div className="flex flex-row justify-between text-xs">
+                        <h2 className="text-slate-700 dark:text-zinc-300">
+                          {track.artists[0]?.name}
+                        </h2>
+                        <p className="text-sm text-slate-700/50 dark:text-zinc-300/50">
+                          {Math.round((track.duration_ms / 60000) * 100) / 100}
+                          min
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button
+                className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
+                  spotifyTracks
+                    ? "bg-emerald-500 dark:bg-rose-600"
+                    : "bg-slate-600"
+                }`}
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                onClick={async () => {
+                  await handleGeneratePlaylist();
+                }}
+                disabled={!spotifyTracks}
+                type="button"
+              >
+                <ArrowDownTrayIcon className="h-7 w-7" />
+                <p className="text-lg">Save Playlist</p>
               </button>
             </>
           )}
@@ -290,35 +338,4 @@ export default function MapContainer() {
       </div>
     </section>
   );
-}
-
-{
-  /* 
-            <button
-              className={`rounded-lg p-3 ${
-                routeData ? "bg-rose-600" : "bg-slate-600"
-              }`}
-              // eslint-disable-next-line @typescript-eslint/no-misused-promises
-              onClick={async () => {
-                await hangleGrabSongs();
-              }}
-              disabled={!routeData}
-              type="button"
-            >
-              <MusicalNoteIcon className="h-9 w-9" />
-            </button>
-            <button
-              className={`rounded-lg p-3 ${
-                spotifySongURIs ? "bg-rose-600" : "bg-slate-600"
-              }`}
-              // eslint-disable-next-line @typescript-eslint/no-misused-promises
-              onClick={async () => {
-                await handleGeneratePlaylist();
-              }}
-              disabled={!spotifySongURIs}
-              type="button"
-            >
-              <ArrowDownTrayIcon className="h-9 w-9" />
-            </button>
-              */
 }
