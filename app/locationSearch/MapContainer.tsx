@@ -27,9 +27,11 @@ import {
 import dynamic from "next/dynamic";
 import {
   ArrowDownTrayIcon,
+  ClockIcon,
   MapIcon,
   MusicalNoteIcon,
 } from "@heroicons/react/24/outline";
+import { GiPathDistance } from "react-icons/gi";
 import { toast } from "react-toastify";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
@@ -146,11 +148,20 @@ export default function MapContainer() {
     }
   };
 
+  const convertToMinutes = (durationSeconds: number) => {
+    return Math.floor(durationSeconds / 60);
+  };
+
+  const convertToMiles = (distanceMeters: number) => {
+    return Math.round((distanceMeters / 1609.344) * 100) / 100;
+  };
+
   const routeLayer = new GeoJsonLayer({
     id: "route-layer",
     data: routeData,
     filled: true,
-    getLineColor: [236, 72, 153, 255],
+    getLineColor: () =>
+      theme === "light" ? [16, 185, 129, 255] : [236, 72, 153, 255],
     lineWidthScale: 20,
     lineWidthMinPixels: 3,
     getLineWidth: 1,
@@ -158,9 +169,9 @@ export default function MapContainer() {
 
   return (
     <section className="flex h-full w-full flex-row">
-      <div className="flex h-full w-1/4 flex-col items-center pt-24">
+      <div className="flex h-full w-1/5 flex-col items-center pt-24">
         {/*This needs to be a form at some point for now this is fine */}
-        <div className="flex w-3/4 flex-col gap-12">
+        <div className="flex w-3/4 flex-col items-center gap-12">
           <SearchBox
             accessToken={MAPBOX_ACCESS_TOKEN}
             value={originSearch}
@@ -193,20 +204,96 @@ export default function MapContainer() {
             mapboxgl={mapboxgl}
             marker
           />
-          <div className="flex flex-row justify-between gap-4">
-            <button
-              className={`rounded-lg p-3 ${
-                originData && destinationData ? "bg-rose-600" : "bg-slate-600"
-              }`}
-              disabled={!(originData && destinationData)}
-              // eslint-disable-next-line @typescript-eslint/no-misused-promises
-              onClick={async () => {
-                await handleFindDirections();
-              }}
-              type="button"
-            >
-              <MapIcon className="h-9 w-9" />
-            </button>
+          <button
+            className={`align-center inline-flex w-48 flex-row  gap-4 rounded-lg p-3 text-emerald-50 ${
+              originData && destinationData
+                ? "bg-emerald-500 dark:bg-rose-600"
+                : "bg-slate-600"
+            }`}
+            disabled={!(originData && destinationData)}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            onClick={async () => {
+              await handleFindDirections();
+            }}
+            type="button"
+          >
+            <MapIcon className="h-7 w-7" />
+            <p className="text-lg">Find directions</p>
+          </button>
+          {!!durationData && (
+            <>
+              <div className=" inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-slate-50 p-5 dark:bg-zinc-700">
+                <GiPathDistance className="h-9 w-9 text-emerald-500 dark:text-rose-600" />
+                <div className="px-2.5">
+                  <h2 className="text-sm text-slate-700 dark:text-zinc-300">
+                    Duration
+                  </h2>
+                  <p className="text-2xl font-semibold">
+                    {convertToMinutes(durationData.duration)} minutes
+                  </p>
+                </div>
+              </div>
+              <div className="inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-slate-50 p-5 dark:bg-zinc-700">
+                <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-rose-600" />
+                <div className="px-2.5">
+                  <h2 className="text-sm text-slate-700 dark:text-zinc-300">
+                    Distance
+                  </h2>
+                  <p className="text-2xl font-semibold">
+                    {convertToMiles(durationData.distance)} miles
+                  </p>
+                </div>
+              </div>
+              <button
+                className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
+                  originData && destinationData
+                    ? "bg-emerald-500 dark:bg-rose-600"
+                    : "bg-slate-600"
+                }`}
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                onClick={async () => {
+                  await hangleGrabSongs();
+                }}
+                disabled={!routeData}
+                type="button"
+              >
+                <MusicalNoteIcon className="h-7 w-7" />
+                <p className="text-lg">Make Playlist</p>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="h-full w-4/5">
+        <Map
+          mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+          mapLib={mapboxgl}
+          initialViewState={{
+            longitude: -122.4,
+            latitude: 37.8,
+            zoom: 14,
+          }}
+          style={{ width: "100%", height: "100%" }}
+          mapStyle={
+            theme === "light"
+              ? "mapbox://styles/mapbox/light-v11"
+              : "mapbox://styles/mapbox/dark-v11"
+          }
+          ref={mapRef}
+        >
+          <DeckGLOverlay layers={[routeLayer]} />
+          <GeolocateControl />
+          <ScaleControl />
+          <NavigationControl />
+          <FullscreenControl />
+        </Map>
+      </div>
+    </section>
+  );
+}
+
+{
+  /* 
             <button
               className={`rounded-lg p-3 ${
                 routeData ? "bg-rose-600" : "bg-slate-600"
@@ -233,33 +320,5 @@ export default function MapContainer() {
             >
               <ArrowDownTrayIcon className="h-9 w-9" />
             </button>
-          </div>
-        </div>
-      </div>
-      <div className="h-full w-3/4">
-        <Map
-          mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
-          mapLib={mapboxgl}
-          initialViewState={{
-            longitude: -122.4,
-            latitude: 37.8,
-            zoom: 14,
-          }}
-          style={{ width: "100%", height: "100%" }}
-          mapStyle={
-            theme === "light"
-              ? "mapbox://styles/mapbox/light-v11"
-              : "mapbox://styles/mapbox/dark-v11"
-          }
-          ref={mapRef}
-        >
-          <DeckGLOverlay layers={[routeLayer]} />
-          <GeolocateControl />
-          <ScaleControl />
-          <NavigationControl />
-          <FullscreenControl />
-        </Map>
-      </div>
-    </section>
-  );
+              */
 }
