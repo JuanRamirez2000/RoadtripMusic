@@ -28,7 +28,7 @@ export default function ThemeToggleSwitch() {
           return setTheme("dark");
         }}
       />
-      <label className="relative z-10 cursor-pointer" htmlFor="toggle-light">
+      <label className="relative z-50 cursor-pointer" htmlFor="toggle-light">
         <Transition
           show={theme === "light"}
           enter="transform transition duration-[400ms]"
