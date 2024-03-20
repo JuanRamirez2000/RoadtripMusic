@@ -34,6 +34,7 @@ import {
 import { GiPathDistance } from "react-icons/gi";
 import { toast } from "react-toastify";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
   () =>
@@ -173,9 +174,9 @@ export default function LocationsSearchPage() {
   return (
     <div className="relative h-screen w-screen">
       <section className="flex h-full w-full flex-row">
-        <div className="flex h-full w-1/4 flex-col items-center overflow-y-auto py-24">
+        <div className="flex h-full w-1/3 min-w-[32rem] max-w-xl flex-col items-center overflow-y-auto py-24">
           {/*This needs to be a form at some point for now this is fine */}
-          <div className="flex w-3/4 flex-col items-center gap-12">
+          <div className="flex w-64 flex-col items-center gap-12">
             <SearchBox
               accessToken={MAPBOX_ACCESS_TOKEN}
               value={originSearch}
@@ -274,15 +275,29 @@ export default function LocationsSearchPage() {
                     return (
                       <li
                         key={track.id}
-                        className="rounded-lg bg-slate-50 p-5 dark:bg-zinc-700"
+                        className="relative flex flex-col rounded-lg bg-slate-50 p-5 dark:bg-zinc-700"
                       >
-                        <p className="truncate text-2xl font-semibold text-emerald-500 dark:text-cyan-600">
+                        {track.album.images[0]?.url ? (
+                          <div className="top-1/5 absolute -left-14 -z-10 size-20 ">
+                            <div className="relative size-20">
+                              <Image
+                                src={track.album.images[0].url}
+                                alt={track.album.name}
+                                fill
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          ""
+                        )}
+                        <p className="truncate text-xl font-semibold text-emerald-500 dark:text-cyan-600">
                           {track.name}
                         </p>
-                        <div className="flex flex-row justify-between text-xs">
-                          <h2 className="text-slate-700 dark:text-zinc-300">
-                            {track.artists[0]?.name}
-                          </h2>
+                        <h2 className="text-slate-700 dark:text-zinc-300">
+                          {track.artists[0]?.name}
+                        </h2>
+                        <div className="flex flex-row items-center gap-1">
+                          <ClockIcon className="size-4 text-sm text-slate-700/50 dark:text-zinc-300/50" />
                           <p className="text-sm text-slate-700/50 dark:text-zinc-300/50">
                             {Math.round((track.duration_ms / 60000) * 100) /
                               100}
@@ -313,7 +328,7 @@ export default function LocationsSearchPage() {
             )}
           </div>
         </div>
-        <div className="h-full w-3/4">
+        <div className="h-full w-full">
           <Map
             mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
             mapLib={mapboxgl}
