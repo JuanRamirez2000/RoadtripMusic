@@ -13,7 +13,7 @@ const grabSongsForPlaylist = async (travelTime = 2400 * 2) => {
     const access_token = session?.accessToken;
 
     if (!access_token) {
-      throw new Error("No access token found");
+      return { status: session?.error, songs: null };
     }
 
     const spotifyTopTracksResponse = await fetch(BASE_URL + "/me/top/tracks", {

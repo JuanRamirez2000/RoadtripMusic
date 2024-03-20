@@ -33,6 +33,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { GiPathDistance } from "react-icons/gi";
 import { toast } from "react-toastify";
+import { redirect } from "next/navigation";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
   () =>
@@ -124,10 +125,8 @@ export default function LocationsSearchPage() {
           theme: theme === "light" ? "light" : "dark",
         });
       }
-      if (res.status === "Error") {
-        toast.error("Music generation failed D:", {
-          theme: theme === "light" ? "light" : "dark",
-        });
+      if (res.status === "RefreshAccessTokenError") {
+        redirect("/login");
       }
     } catch (err) {
       toast.error("Some error occured generating music", {
@@ -144,7 +143,7 @@ export default function LocationsSearchPage() {
       const trackURIs = spotifyTracks.map((track) => track.uri);
 
       await generatePlaylist("roadtripMusic", trackURIs);
-      toast("Playlist Done!", {
+      toast.success("Playlist Done!", {
         theme: theme === "light" ? "light" : "dark",
       });
     } catch (err) {
@@ -174,7 +173,7 @@ export default function LocationsSearchPage() {
   return (
     <div className="relative h-screen w-screen">
       <section className="flex h-full w-full flex-row">
-        <div className="flex h-full w-1/5 flex-col items-center overflow-y-auto py-24">
+        <div className="flex h-full w-1/4 flex-col items-center overflow-y-auto py-24">
           {/*This needs to be a form at some point for now this is fine */}
           <div className="flex w-3/4 flex-col items-center gap-12">
             <SearchBox
@@ -314,7 +313,7 @@ export default function LocationsSearchPage() {
             )}
           </div>
         </div>
-        <div className="h-full w-4/5">
+        <div className="h-full w-3/4">
           <Map
             mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
             mapLib={mapboxgl}

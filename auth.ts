@@ -83,11 +83,18 @@ export const {
           user,
         };
       }
-      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      else if (Date.now() < token.accessTokenExpires!) {
         return token;
+      } else {
+        try {
+          const newToken = await refreshAccessToken(token);
+          return newToken;
+        } catch (error) {
+          console.error("Error refreshing access token", error);
+          return { ...token, error: "RefreshAccessTokenError" as const };
+        }
       }
-      const newToken = await refreshAccessToken(token);
-      return newToken;
     },
     session({ session, token }) {
       session.accessToken = token.accessToken;
