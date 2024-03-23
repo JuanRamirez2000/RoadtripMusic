@@ -3,7 +3,6 @@ import Link from "next/link";
 import HeroImage from "./HeroImage";
 import { auth } from "auth";
 import { SignIn } from "./components/AuthComponents";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Roadtrip Music",
@@ -12,7 +11,6 @@ export const metadata: Metadata = {
 
 async function Home() {
   const session = await auth();
-  if (session?.error === "RefreshAccessTokenError") redirect("/login");
   return (
     <main className="flex min-h-screen w-screen flex-col items-center justify-center">
       <section className="flex max-w-7xl flex-col items-center justify-center gap-1 p-1 lg:flex-row-reverse">

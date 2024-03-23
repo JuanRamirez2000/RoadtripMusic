@@ -127,7 +127,7 @@ export default function LocationsSearchPage() {
         });
       }
       if (res.status === "RefreshAccessTokenError") {
-        redirect("/login");
+        redirect("/api/auth/signIn");
       }
     } catch (err) {
       toast.error("Some error occured generating music", {
@@ -275,10 +275,10 @@ export default function LocationsSearchPage() {
                     return (
                       <li
                         key={track.id}
-                        className="relative flex flex-col rounded-lg bg-slate-50 p-5 dark:bg-zinc-700"
+                        className="dark:bg-zinc-70 relative flex flex-col rounded-lg bg-slate-50 p-5"
                       >
                         {track.album.images[0]?.url ? (
-                          <div className="top-1/5 absolute -left-14 -z-10 size-20 ">
+                          <div className="absolute -left-20">
                             <div className="relative size-20">
                               <Image
                                 src={track.album.images[0].url}

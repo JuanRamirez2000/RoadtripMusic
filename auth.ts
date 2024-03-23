@@ -66,7 +66,7 @@ export const {
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: "/api/auth/signIn",
   },
   session: {
     strategy: "jwt",
