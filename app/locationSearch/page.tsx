@@ -18,7 +18,7 @@ import type {
   SearchBoxRetrieveResponse,
 } from "@mapbox/search-js-core";
 import { findDirectionsBase } from "app/actions/findDirections";
-import { GeoJsonLayer } from "@deck.gl/layers/typed";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers/typed";
 import {
   grabSongsForPlaylist,
   generatePlaylist,
@@ -34,7 +34,9 @@ import { GiPathDistance } from "react-icons/gi";
 import { toast } from "react-toastify";
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import along from "@turf/along";
 import type { DirectionsRoute } from "types/mapboxDirections";
+import type { Feature, Point } from "geojson";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
   () =>
@@ -47,6 +49,10 @@ const SearchBox = dynamic(
   /* eslint-disable @typescript-eslint/no-explicit-any */
 ) as any;
 
+type TrackWithDistance = SpotifyApi.TrackObjectFull & {
+  distanceTraveled?: number;
+  point?: Feature<Point>;
+};
 const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
 export default function LocationsSearchPage() {
@@ -63,7 +69,7 @@ export default function LocationsSearchPage() {
   const [routeData, setRouteData] = useState<DirectionsRoute>();
 
   const [spotifyTracks, setSpotifyTracks] = useState<
-    SpotifyApi.TrackObjectFull[] | null
+    TrackWithDistance[] | null
   >(null);
 
   const handleFindDirections = async () => {
@@ -83,9 +89,7 @@ export default function LocationsSearchPage() {
         throw new Error("Failed grabbing directions from backend");
       }
 
-      const { routes } = directions;
-
-      setRouteData(routes[0]);
+      setRouteData(directions.routes[0]);
 
       //* Clear out everything
       setSpotifyTracks(null);
@@ -106,7 +110,30 @@ export default function LocationsSearchPage() {
 
       const res = await grabSongsForPlaylist(routeData.duration);
       if (res.songs) {
-        setSpotifyTracks(res.songs);
+        const songs = res.songs;
+        const routeDistance = convertToMiles(routeData.distance);
+        const playlistDuration = songs.reduce((acc, track) => {
+          return acc + track.duration_ms;
+        }, 0);
+
+        let distanceUsed = 0;
+
+        const tracksWithDistance: TrackWithDistance[] = songs.map((track) => {
+          const trackTimePercentage = track.duration_ms / playlistDuration;
+          const trackDistanceMI = routeDistance * trackTimePercentage;
+          const trackDistanceFromOrigin = trackDistanceMI + distanceUsed;
+          distanceUsed += trackDistanceMI;
+
+          const point = along(routeData?.geometry, trackDistanceFromOrigin, {
+            units: "miles",
+          });
+          return {
+            ...track,
+            distanceTraveled: trackDistanceFromOrigin,
+            point: point,
+          };
+        });
+        setSpotifyTracks(tracksWithDistance);
       }
       if (res.status === "Ok") {
         toast.success("Generated some music!", {
@@ -150,6 +177,18 @@ export default function LocationsSearchPage() {
     getLineWidth: 1,
   });
 
+  const tracksLayer = new ScatterplotLayer({
+    id: "tracksLayer",
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    data: spotifyTracks!,
+    pickable: true,
+    filled: true,
+    stroked: true,
+    radiusScale: 8,
+    getPosition: (data: TrackWithDistance) => data.point?.geometry.coordinates,
+    getRadius: () => 50,
+    getFillColor: (d) => [255, 140, 0],
+  });
   if (!MAPBOX_ACCESS_TOKEN) return <h1>Error Loading</h1>;
   if (!mapRef) return <h1>Loading...</h1>;
 
@@ -327,7 +366,7 @@ export default function LocationsSearchPage() {
             }
             ref={mapRef}
           >
-            <DeckGLOverlay layers={[routeLayer]} />
+            <DeckGLOverlay layers={[routeLayer, tracksLayer]} />
             <GeolocateControl />
             <ScaleControl />
             <NavigationControl />
