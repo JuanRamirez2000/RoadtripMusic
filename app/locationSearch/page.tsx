@@ -19,7 +19,6 @@ import type {
 } from "@mapbox/search-js-core";
 import { findDirectionsBase } from "app/actions/findDirections";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
-import type { LineString } from "geojson";
 import {
   grabSongsForPlaylist,
   generatePlaylist,
@@ -35,6 +34,7 @@ import { GiPathDistance } from "react-icons/gi";
 import { toast } from "react-toastify";
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import type { DirectionsRoute } from "types/mapboxDirections";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
   () =>
@@ -49,11 +49,6 @@ const SearchBox = dynamic(
 
 const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-type RouteDuration = {
-  distance: number;
-  duration: number;
-};
-
 export default function LocationsSearchPage() {
   const { theme } = useTheme();
   const mapRef = useRef<MapRef>(null);
@@ -65,15 +60,11 @@ export default function LocationsSearchPage() {
   const [destinationData, setDestinationData] =
     useState<SearchBoxFeatureSuggestion | null>(null);
 
-  const [routeData, setRouteData] = useState<LineString>();
-  const [durationData, setDurationData] = useState<RouteDuration | null>(null);
+  const [routeData, setRouteData] = useState<DirectionsRoute>();
 
   const [spotifyTracks, setSpotifyTracks] = useState<
     SpotifyApi.TrackObjectFull[] | null
   >(null);
-
-  if (!MAPBOX_ACCESS_TOKEN) return <h1>Error Loading</h1>;
-  if (!mapRef) return <h1>Loading...</h1>;
 
   const handleFindDirections = async () => {
     if (!originData) return;
@@ -94,11 +85,7 @@ export default function LocationsSearchPage() {
 
       const { routes } = directions;
 
-      setRouteData(routes[0]?.geometry);
-      setDurationData({
-        duration: routes[0]?.duration as number,
-        distance: routes[0]?.distance as number,
-      });
+      setRouteData(routes[0]);
 
       //* Clear out everything
       setSpotifyTracks(null);
@@ -115,9 +102,9 @@ export default function LocationsSearchPage() {
 
   const hangleGrabSongs = async () => {
     try {
-      if (!durationData) return;
+      if (!routeData) return;
 
-      const res = await grabSongsForPlaylist(durationData.duration);
+      const res = await grabSongsForPlaylist(routeData.duration);
       if (res.songs) {
         setSpotifyTracks(res.songs);
       }
@@ -152,17 +139,9 @@ export default function LocationsSearchPage() {
     }
   };
 
-  const convertToMinutes = (durationSeconds: number) => {
-    return Math.floor(durationSeconds / 60);
-  };
-
-  const convertToMiles = (distanceMeters: number) => {
-    return Math.round((distanceMeters / 1609.344) * 100) / 100;
-  };
-
   const routeLayer = new GeoJsonLayer({
     id: "route-layer",
-    data: routeData,
+    data: routeData?.geometry,
     filled: true,
     getLineColor: () =>
       theme === "light" ? [16, 185, 129, 255] : [8, 145, 178, 255],
@@ -170,6 +149,9 @@ export default function LocationsSearchPage() {
     lineWidthMinPixels: 3,
     getLineWidth: 1,
   });
+
+  if (!MAPBOX_ACCESS_TOKEN) return <h1>Error Loading</h1>;
+  if (!mapRef) return <h1>Loading...</h1>;
 
   return (
     <div className="relative h-screen w-screen">
@@ -225,7 +207,7 @@ export default function LocationsSearchPage() {
               <MapIcon className="h-7 w-7" />
               <p className="text-lg">Find directions</p>
             </button>
-            {!!durationData && (
+            {!!routeData && (
               <>
                 <div className=" inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-slate-50 p-5 dark:bg-zinc-700">
                   <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
@@ -234,7 +216,7 @@ export default function LocationsSearchPage() {
                       Duration
                     </h2>
                     <p className="text-2xl font-semibold">
-                      {convertToMinutes(durationData.duration)} minutes
+                      {convertToMinutes(routeData.duration)} minutes
                     </p>
                   </div>
                 </div>
@@ -246,7 +228,7 @@ export default function LocationsSearchPage() {
                       Distance
                     </h2>
                     <p className="text-2xl font-semibold">
-                      {convertToMiles(durationData.distance)} miles
+                      {convertToMiles(routeData.distance)} miles
                     </p>
                   </div>
                 </div>
@@ -275,7 +257,7 @@ export default function LocationsSearchPage() {
                     return (
                       <li
                         key={track.id}
-                        className="dark:bg-zinc-70 relative flex flex-col rounded-lg bg-slate-50 p-5"
+                        className="dark:bg-zinc-70 relative flex flex-col rounded-lg bg-slate-50 p-5 dark:bg-zinc-700"
                       >
                         {track.album.images[0]?.url ? (
                           <div className="absolute -left-20">
@@ -356,3 +338,11 @@ export default function LocationsSearchPage() {
     </div>
   );
 }
+
+const convertToMinutes = (durationSeconds: number) => {
+  return Math.floor(durationSeconds / 60);
+};
+
+const convertToMiles = (distanceMeters: number) => {
+  return Math.round((distanceMeters / 1609.344) * 100) / 100;
+};
