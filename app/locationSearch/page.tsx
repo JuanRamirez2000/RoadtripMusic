@@ -18,7 +18,7 @@ import type {
   SearchBoxRetrieveResponse,
 } from "@mapbox/search-js-core";
 import { findDirectionsBase } from "app/actions/findDirections";
-import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers/typed";
+import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import {
   grabSongsForPlaylist,
   generatePlaylist,
@@ -32,7 +32,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { GiPathDistance } from "react-icons/gi";
 import { toast } from "react-toastify";
-import { redirect } from "next/navigation";
 import Image from "next/image";
 import along from "@turf/along";
 import type { DirectionsRoute } from "types/mapboxDirections";
@@ -68,9 +67,7 @@ export default function LocationsSearchPage() {
 
   const [routeData, setRouteData] = useState<DirectionsRoute>();
 
-  const [spotifyTracks, setSpotifyTracks] = useState<
-    TrackWithDistance[] | null
-  >(null);
+  const [spotifyTracks, setSpotifyTracks] = useState<TrackWithDistance[]>([]);
 
   const handleFindDirections = async () => {
     if (!originData) return;
@@ -92,7 +89,7 @@ export default function LocationsSearchPage() {
       setRouteData(directions.routes[0]);
 
       //* Clear out everything
-      setSpotifyTracks(null);
+      setSpotifyTracks([]);
       toast.success("Found directions!", {
         theme: theme === "light" ? "light" : "dark",
       });
@@ -140,9 +137,6 @@ export default function LocationsSearchPage() {
           theme: theme === "light" ? "light" : "dark",
         });
       }
-      if (res.status === "RefreshAccessTokenError") {
-        redirect("/api/auth/signIn");
-      }
     } catch (err) {
       toast.error("Some error occured generating music", {
         theme: theme === "light" ? "light" : "dark",
@@ -177,18 +171,19 @@ export default function LocationsSearchPage() {
     getLineWidth: 1,
   });
 
+  /* 
   const tracksLayer = new ScatterplotLayer({
     id: "tracksLayer",
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    data: spotifyTracks!,
+    data: spotifyTracks,
     pickable: true,
     filled: true,
     stroked: true,
     radiusScale: 8,
     getPosition: (data: TrackWithDistance) => data.point?.geometry.coordinates,
     getRadius: () => 50,
-    getFillColor: (d) => [255, 140, 0],
+    getFillColor: () => [255, 140, 0],
   });
+  */
   if (!MAPBOX_ACCESS_TOKEN) return <h1>Error Loading</h1>;
   if (!mapRef) return <h1>Loading...</h1>;
 
@@ -305,6 +300,7 @@ export default function LocationsSearchPage() {
                                 src={track.album.images[0].url}
                                 alt={track.album.name}
                                 fill
+                                sizes="100vw"
                               />
                             </div>
                           </div>
@@ -366,7 +362,7 @@ export default function LocationsSearchPage() {
             }
             ref={mapRef}
           >
-            <DeckGLOverlay layers={[routeLayer, tracksLayer]} />
+            <DeckGLOverlay layers={[routeLayer]} />
             <GeolocateControl />
             <ScaleControl />
             <NavigationControl />

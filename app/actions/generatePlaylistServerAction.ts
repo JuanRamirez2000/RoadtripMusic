@@ -1,5 +1,5 @@
 "use server";
-import { auth } from "auth";
+import { auth, clerkClient, type OauthAccessToken } from "@clerk/nextjs/server";
 
 const BASE_URL = "https://api.spotify.com/v1";
 const MS_TO_S_CONVERSION = 1000;
@@ -8,26 +8,30 @@ const TRACK_AMOUNT_PER_RECOMMENDATION = 2;
 const grabSongsForPlaylist = async (travelTime = 2400 * 2) => {
   try {
     //* Authenticate the user
-    const session = await auth();
+    const { userId } = auth();
 
-    const access_token = session?.accessToken;
-
-    if (session?.error === "RefreshAccessTokenError") {
-      return { status: "RefreshAccessTokenError", songs: null };
+    if (!userId) {
+      throw new Error("No Authenticated User");
     }
 
-    if (!access_token) {
-      throw new Error(session?.error);
+    const accessTokenResponse =
+      (await clerkClient.users.getUserOauthAccessToken(
+        userId,
+        "oauth_spotify"
+      )) as unknown as OauthAccessToken[];
+
+    const accessToken = accessTokenResponse[0]?.token;
+    if (!accessToken) {
+      throw new Error("No Access Token");
     }
 
     const spotifyTopTracksResponse = await fetch(BASE_URL + "/me/top/tracks", {
       headers: {
-        Authorization: `Bearer ${access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
     if (!spotifyTopTracksResponse.ok) {
-      console.log(await spotifyTopTracksResponse.json());
       throw new Error("Couldnt grab users top tracks");
     }
 
@@ -38,7 +42,7 @@ const grabSongsForPlaylist = async (travelTime = 2400 * 2) => {
     const totalTracks: SpotifyApi.TrackObjectFull[] = [];
     totalTracks.push(...userTopTracks.items);
     while (!checkIfPlaylistIsLongerThanMaxTime(totalTracks, travelTime)) {
-      const newTracks = await generateTracks(userTopTracks, access_token);
+      const newTracks = await generateTracks(userTopTracks, accessToken);
       if (newTracks) {
         totalTracks.push(
           ...(newTracks.tracks as unknown as SpotifyApi.TrackObjectFull[])
@@ -49,7 +53,7 @@ const grabSongsForPlaylist = async (travelTime = 2400 * 2) => {
     return { status: "Ok", songs: totalTracks };
   } catch (error) {
     console.error(error);
-    return { status: "Error", songs: null };
+    return { status: "Error", songs: [] };
   }
 };
 
@@ -58,17 +62,25 @@ const generatePlaylist = async (
   trackURIs: string[]
 ) => {
   try {
-    const session = await auth();
+    const { userId } = auth();
 
-    const access_token = session?.accessToken;
-
-    if (!access_token) {
-      throw new Error("No access token found");
+    if (!userId) {
+      throw new Error("No Authenticated User");
     }
 
+    const accessTokenResponse =
+      (await clerkClient.users.getUserOauthAccessToken(
+        userId,
+        "oauth_spotify"
+      )) as unknown as OauthAccessToken[];
+
+    const accessToken = accessTokenResponse[0]?.token;
+    if (!accessToken) {
+      throw new Error("No Access Token");
+    }
     const grabUserResponse = await fetch(BASE_URL + "/me", {
       headers: {
-        Authorization: `Bearer ${access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -81,13 +93,13 @@ const generatePlaylist = async (
     //* Deleting a playlist by the provided name if it already exists on the user
     const duplicatePlaylist = await findDuplicatePlaylist(
       playlistName,
-      access_token
+      accessToken
     );
     if (duplicatePlaylist) {
       await fetch(`${BASE_URL}/playlists/${duplicatePlaylist.id}/followers`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
     }
@@ -98,7 +110,7 @@ const generatePlaylist = async (
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -128,7 +140,7 @@ const generatePlaylist = async (
       {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
@@ -193,11 +205,11 @@ const shuffleTracks = (tracks: string[]) => {
 //Finds duplicate playlist in a user's profile
 const findDuplicatePlaylist = async (
   playlistName: string,
-  access_token: string
+  accessToken: string
 ): Promise<SpotifyApi.PlaylistObjectSimplified | undefined> => {
   const userPlaylistRequest = await fetch(BASE_URL + "/me/playlists", {
     headers: {
-      Authorization: `Bearer ${access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
   if (!userPlaylistRequest.ok) {
