@@ -188,7 +188,7 @@ export default function LocationsSearchPage() {
   if (!mapRef) return <h1>Loading...</h1>;
 
   return (
-    <div className="flex h-screen w-full flex-row">
+    <main className="flex h-screen w-full flex-row">
       <section className="relative">
         <div className="flex h-full w-full min-w-96 max-w-xl flex-col items-center gap-12 overflow-y-auto py-24 lg:w-1/4">
           <SearchBox
@@ -367,7 +367,7 @@ export default function LocationsSearchPage() {
           <FullscreenControl />
         </Map>
       </section>
-    </div>
+    </main>
   );
 }
 
