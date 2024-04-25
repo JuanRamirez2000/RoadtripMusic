@@ -11,7 +11,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-slate-50 dark:bg-zinc-800">
+      <body className="bg-zinc-50 dark:bg-zinc-800">
         <Providers>
           <ThemeToggleSwitch />
           {children}

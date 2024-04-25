@@ -188,187 +188,184 @@ export default function LocationsSearchPage() {
   if (!mapRef) return <h1>Loading...</h1>;
 
   return (
-    <div className="relative h-screen w-screen">
-      <section className="flex h-full w-full flex-row">
-        <div className="flex h-full w-1/3 min-w-[32rem] max-w-xl flex-col items-center overflow-y-auto py-24">
-          {/*This needs to be a form at some point for now this is fine */}
-          <div className="flex w-64 flex-col items-center gap-12">
-            <SearchBox
-              accessToken={MAPBOX_ACCESS_TOKEN}
-              value={originSearch}
-              onChange={setOriginSearch}
-              onRetrieve={(res: SearchBoxRetrieveResponse) =>
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                setOriginData(res.features[0]!)
-              }
-              options={{
-                proximity: mapRef.current?.getMap().getCenter(),
-              }}
-              placeholder="Origin"
-              map={mapRef.current?.getMap()}
-              mapboxgl={mapboxgl}
-              marker
-            />
-            <SearchBox
-              accessToken={MAPBOX_ACCESS_TOKEN}
-              value={destinationSearch}
-              onChange={setDestinationSearch}
-              onRetrieve={(res: SearchBoxRetrieveResponse) =>
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                setDestinationData(res.features[0]!)
-              }
-              options={{
-                proximity: mapRef.current?.getMap().getCenter(),
-              }}
-              placeholder="Destination"
-              map={mapRef.current?.getMap()}
-              mapboxgl={mapboxgl}
-              marker
-            />
-            <button
-              className={`align-center inline-flex w-48 flex-row  gap-4 rounded-lg p-3 text-emerald-50 ${
-                originData && destinationData
-                  ? "bg-emerald-500 dark:bg-cyan-600"
-                  : "bg-slate-600"
-              }`}
-              disabled={!(originData && destinationData)}
-              // eslint-disable-next-line @typescript-eslint/no-misused-promises
-              onClick={async () => {
-                await handleFindDirections();
-              }}
-              type="button"
-            >
-              <MapIcon className="h-7 w-7" />
-              <p className="text-lg">Find directions</p>
-            </button>
-            {!!routeData && (
-              <>
-                <div className=" inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-slate-50 p-5 dark:bg-zinc-700">
-                  <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
-                  <div className="px-2.5">
-                    <h2 className="text-sm text-slate-700 dark:text-zinc-300">
-                      Duration
-                    </h2>
-                    <p className="text-2xl font-semibold">
-                      {convertToMinutes(routeData.duration)} minutes
-                    </p>
-                  </div>
-                </div>
-                <div className="inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-slate-50 p-5 dark:bg-zinc-700">
-                  <GiPathDistance className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
-
-                  <div className="px-2.5">
-                    <h2 className="text-sm text-slate-700 dark:text-zinc-300">
-                      Distance
-                    </h2>
-                    <p className="text-2xl font-semibold">
-                      {convertToMiles(routeData.distance)} miles
-                    </p>
-                  </div>
-                </div>
-                <button
-                  className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
-                    originData && destinationData
-                      ? "bg-emerald-500 dark:bg-cyan-600"
-                      : "bg-slate-600"
-                  }`}
-                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                  onClick={async () => {
-                    await hangleGrabSongs();
-                  }}
-                  disabled={!routeData}
-                  type="button"
-                >
-                  <MusicalNoteIcon className="h-7 w-7" />
-                  <p className="text-lg">Make Playlist</p>
-                </button>
-              </>
-            )}
-            {!!spotifyTracks && (
-              <>
-                <ul className="flex w-full max-w-72 flex-col gap-5">
-                  {spotifyTracks.map((track) => {
-                    return (
-                      <li
-                        key={track.id}
-                        className="dark:bg-zinc-70 relative flex flex-col rounded-lg bg-slate-50 p-5 dark:bg-zinc-700"
-                      >
-                        {track.album.images[0]?.url ? (
-                          <div className="absolute -left-20">
-                            <div className="relative size-20">
-                              <Image
-                                src={track.album.images[0].url}
-                                alt={track.album.name}
-                                fill
-                                sizes="100vw"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          ""
-                        )}
-                        <p className="truncate text-xl font-semibold text-emerald-500 dark:text-cyan-600">
-                          {track.name}
-                        </p>
-                        <h2 className="text-slate-700 dark:text-zinc-300">
-                          {track.artists[0]?.name}
-                        </h2>
-                        <div className="flex flex-row items-center gap-1">
-                          <ClockIcon className="size-4 text-sm text-slate-700/50 dark:text-zinc-300/50" />
-                          <p className="text-sm text-slate-700/50 dark:text-zinc-300/50">
-                            {Math.round((track.duration_ms / 60000) * 100) /
-                              100}
-                            min
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <button
-                  className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
-                    spotifyTracks
-                      ? "bg-emerald-500 dark:bg-cyan-600"
-                      : "bg-slate-600"
-                  }`}
-                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                  onClick={async () => {
-                    await handleGeneratePlaylist();
-                  }}
-                  disabled={!spotifyTracks}
-                  type="button"
-                >
-                  <ArrowDownTrayIcon className="h-7 w-7" />
-                  <p className="text-lg">Save Playlist</p>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="h-full w-full">
-          <Map
-            mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
-            mapLib={mapboxgl}
-            initialViewState={{
-              longitude: -122.4,
-              latitude: 37.8,
-              zoom: 14,
-            }}
-            style={{ width: "100%", height: "100%" }}
-            mapStyle={
-              theme === "light"
-                ? "mapbox://styles/mapbox/light-v11"
-                : "mapbox://styles/mapbox/dark-v11"
+    <div className="flex h-screen w-full flex-row">
+      <section className="relative">
+        <div className="flex h-full w-full min-w-96 max-w-xl flex-col items-center gap-12 overflow-y-auto py-24 lg:w-1/4">
+          <SearchBox
+            accessToken={MAPBOX_ACCESS_TOKEN}
+            value={originSearch}
+            onChange={setOriginSearch}
+            onRetrieve={(res: SearchBoxRetrieveResponse) =>
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              setOriginData(res.features[0]!)
             }
-            ref={mapRef}
+            options={{
+              proximity: mapRef.current?.getMap().getCenter(),
+            }}
+            placeholder="Origin"
+            map={mapRef.current?.getMap()}
+            mapboxgl={mapboxgl}
+            marker
+          />
+          <SearchBox
+            accessToken={MAPBOX_ACCESS_TOKEN}
+            value={destinationSearch}
+            onChange={setDestinationSearch}
+            onRetrieve={(res: SearchBoxRetrieveResponse) =>
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              setDestinationData(res.features[0]!)
+            }
+            options={{
+              proximity: mapRef.current?.getMap().getCenter(),
+            }}
+            placeholder="Destination"
+            map={mapRef.current?.getMap()}
+            mapboxgl={mapboxgl}
+            marker
+          />
+          <button
+            className={`align-center inline-flex w-48 flex-row  gap-4 rounded-lg p-3 text-emerald-50 ${
+              originData && destinationData
+                ? "bg-emerald-500 dark:bg-cyan-600"
+                : "bg-zinc-600"
+            }`}
+            disabled={!(originData && destinationData)}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            onClick={async () => {
+              await handleFindDirections();
+            }}
+            type="button"
           >
-            <DeckGLOverlay layers={[routeLayer]} />
-            <GeolocateControl />
-            <ScaleControl />
-            <NavigationControl />
-            <FullscreenControl />
-          </Map>
+            <MapIcon className="h-7 w-7" />
+            <p className="text-lg">Find directions</p>
+          </button>
+          {!!routeData && (
+            <>
+              <div className=" inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700">
+                <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
+                <div className="px-2.5">
+                  <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
+                    Duration
+                  </h2>
+                  <p className="text-2xl font-semibold">
+                    {convertToMinutes(routeData.duration)} minutes
+                  </p>
+                </div>
+              </div>
+              <div className="inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700">
+                <GiPathDistance className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
+
+                <div className="px-2.5">
+                  <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
+                    Distance
+                  </h2>
+                  <p className="text-2xl font-semibold">
+                    {convertToMiles(routeData.distance)} miles
+                  </p>
+                </div>
+              </div>
+              <button
+                className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
+                  originData && destinationData
+                    ? "bg-emerald-500 dark:bg-cyan-600"
+                    : "bg-zinc-600"
+                }`}
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                onClick={async () => {
+                  await hangleGrabSongs();
+                }}
+                disabled={!routeData}
+                type="button"
+              >
+                <MusicalNoteIcon className="h-7 w-7" />
+                <p className="text-lg">Make Playlist</p>
+              </button>
+            </>
+          )}
+          {spotifyTracks.length !== 0 && (
+            <>
+              <ul className="flex w-full max-w-72 flex-col gap-5">
+                {spotifyTracks.map((track) => {
+                  return (
+                    <li
+                      key={track.id}
+                      className="relative flex flex-col rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700"
+                    >
+                      <p className="truncate text-lg font-semibold text-emerald-500 dark:text-cyan-600">
+                        {track.name}
+                      </p>
+
+                      <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
+                        {track.artists[0]?.name}
+                      </h2>
+                      <div className="flex flex-row items-center gap-1">
+                        <ClockIcon className="size-4 text-xs text-zinc-700/50 dark:text-zinc-300/50" />
+                        <p className="text-xs text-zinc-700/50 dark:text-zinc-300/50">
+                          {Math.round((track.duration_ms / 60000) * 100) / 100}
+                          min
+                        </p>
+                      </div>
+                      {track.album.images[0]?.url ? (
+                        <div className="absolute inset-y-3 -right-2">
+                          <div className="relative size-20">
+                            <Image
+                              src={track.album.images[0].url}
+                              alt={track.album.name}
+                              fill
+                              sizes="100vw"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <button
+                className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
+                  spotifyTracks
+                    ? "bg-emerald-500 dark:bg-cyan-600"
+                    : "bg-zinc-600"
+                }`}
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                onClick={async () => {
+                  await handleGeneratePlaylist();
+                }}
+                disabled={!spotifyTracks}
+                type="button"
+              >
+                <ArrowDownTrayIcon className="h-7 w-7" />
+                <p className="text-lg">Save Playlist</p>
+              </button>
+            </>
+          )}
         </div>
+      </section>
+      <section className="h-full w-full grow">
+        <Map
+          mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+          mapLib={mapboxgl}
+          initialViewState={{
+            longitude: -122.4,
+            latitude: 37.8,
+            zoom: 14,
+          }}
+          style={{ width: "100%", height: "100%" }}
+          mapStyle={
+            theme === "light"
+              ? "mapbox://styles/mapbox/light-v11"
+              : "mapbox://styles/mapbox/dark-v11"
+          }
+          ref={mapRef}
+        >
+          <DeckGLOverlay layers={[routeLayer]} />
+          <GeolocateControl />
+          <ScaleControl />
+          <NavigationControl />
+          <FullscreenControl />
+        </Map>
       </section>
     </div>
   );
