@@ -2,7 +2,7 @@
 //! This will be added back when the library is more stable
 //import { SearchBox } from "@mapbox/search-js-react";
 import { useTheme } from "next-themes";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FullscreenControl,
   GeolocateControl,
@@ -36,6 +36,7 @@ import Image from "next/image";
 import along from "@turf/along";
 import type { DirectionsRoute } from "types/mapboxDirections";
 import type { Feature, Point } from "geojson";
+import { Transition } from "@headlessui/react";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
   () =>
@@ -53,6 +54,7 @@ type TrackWithDistance = SpotifyApi.TrackObjectFull & {
   point?: Feature<Point>;
 };
 const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+const MOBILE_NAV_BREAKPOINT = 767;
 
 export default function LocationsSearchPage() {
   const { theme } = useTheme();
@@ -68,6 +70,32 @@ export default function LocationsSearchPage() {
   const [routeData, setRouteData] = useState<DirectionsRoute>();
 
   const [spotifyTracks, setSpotifyTracks] = useState<TrackWithDistance[]>([]);
+
+  const [, setSideboarOpen] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  useEffect(() => {
+    if (window.innerWidth > MOBILE_NAV_BREAKPOINT) {
+      setShowSidebar(false);
+    } else if (window.innerWidth < MOBILE_NAV_BREAKPOINT) {
+      setShowSidebar(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > MOBILE_NAV_BREAKPOINT) {
+        setShowSidebar(false);
+        setSideboarOpen(false);
+      } else if (window.innerWidth < MOBILE_NAV_BREAKPOINT) {
+        setShowSidebar(true);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("reset", handleResize);
+    };
+  }, []);
 
   const handleFindDirections = async () => {
     if (!originData) return;
@@ -189,161 +217,181 @@ export default function LocationsSearchPage() {
 
   return (
     <main className="flex h-screen w-full flex-row">
-      <section className="relative">
-        <div className="flex h-full w-full min-w-96 max-w-xl flex-col items-center gap-12 overflow-y-auto py-24 lg:w-1/4">
-          <SearchBox
-            accessToken={MAPBOX_ACCESS_TOKEN}
-            value={originSearch}
-            onChange={setOriginSearch}
-            onRetrieve={(res: SearchBoxRetrieveResponse) =>
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              setOriginData(res.features[0]!)
-            }
-            options={{
-              proximity: mapRef.current?.getMap().getCenter(),
-            }}
-            placeholder="Origin"
-            map={mapRef.current?.getMap()}
-            mapboxgl={mapboxgl}
-            marker
-          />
-          <SearchBox
-            accessToken={MAPBOX_ACCESS_TOKEN}
-            value={destinationSearch}
-            onChange={setDestinationSearch}
-            onRetrieve={(res: SearchBoxRetrieveResponse) =>
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              setDestinationData(res.features[0]!)
-            }
-            options={{
-              proximity: mapRef.current?.getMap().getCenter(),
-            }}
-            placeholder="Destination"
-            map={mapRef.current?.getMap()}
-            mapboxgl={mapboxgl}
-            marker
-          />
-          <button
-            className={`align-center inline-flex w-48 flex-row  gap-4 rounded-lg p-3 text-emerald-50 ${
-              originData && destinationData
-                ? "bg-emerald-500 dark:bg-cyan-600"
-                : "bg-zinc-600"
-            }`}
-            disabled={!(originData && destinationData)}
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            onClick={async () => {
-              await handleFindDirections();
-            }}
-            type="button"
-          >
-            <MapIcon className="h-7 w-7" />
-            <p className="text-lg">Find directions</p>
-          </button>
-          {!!routeData && (
-            <>
-              <div className=" inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700">
-                <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
-                <div className="px-2.5">
-                  <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
-                    Duration
-                  </h2>
-                  <p className="text-2xl font-semibold">
-                    {convertToMinutes(routeData.duration)} minutes
-                  </p>
-                </div>
+      <div className="absolute z-50 flex w-screen justify-center md:hidden">
+        <button
+          className="absolute mt-2 rounded-lg bg-zinc-100 px-4 py-3 font-semibold text-zinc-800 duration-150 hover:scale-110 "
+          onClick={() => setShowSidebar((prev) => !prev)}
+        >
+          Plan
+        </button>
+      </div>
+      <Transition
+        show={!showSidebar}
+        enter="transition ease-in-out duration-300 transform"
+        enterFrom="-translate-x-full"
+        enterTo="translate-x-0"
+        leave="transition ease-in-out duration-300 transform"
+        leaveFrom="translate-x-0"
+        leaveTo="-translate-x-full"
+        as="section"
+        className={`${
+          !showSidebar
+            ? "absolute z-10 flex w-5/6 min-w-96 max-w-xl flex-col items-center gap-12 overflow-y-auto bg-zinc-800 py-24 md:static md:w-1/4"
+            : "hidden"
+        } h-full`}
+      >
+        <SearchBox
+          accessToken={MAPBOX_ACCESS_TOKEN}
+          value={originSearch}
+          onChange={setOriginSearch}
+          onRetrieve={(res: SearchBoxRetrieveResponse) =>
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            setOriginData(res.features[0]!)
+          }
+          options={{
+            proximity: mapRef.current?.getMap().getCenter(),
+          }}
+          placeholder="Origin"
+          map={mapRef.current?.getMap()}
+          mapboxgl={mapboxgl}
+          marker
+        />
+        <SearchBox
+          accessToken={MAPBOX_ACCESS_TOKEN}
+          value={destinationSearch}
+          onChange={setDestinationSearch}
+          onRetrieve={(res: SearchBoxRetrieveResponse) =>
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            setDestinationData(res.features[0]!)
+          }
+          options={{
+            proximity: mapRef.current?.getMap().getCenter(),
+          }}
+          placeholder="Destination"
+          map={mapRef.current?.getMap()}
+          mapboxgl={mapboxgl}
+          marker
+        />
+        <button
+          className={`align-center inline-flex w-48 flex-row  gap-4 rounded-lg p-3 text-emerald-50 ${
+            originData && destinationData
+              ? "bg-emerald-500 dark:bg-cyan-600"
+              : "bg-zinc-600"
+          }`}
+          disabled={!(originData && destinationData)}
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          onClick={async () => {
+            await handleFindDirections();
+          }}
+          type="button"
+        >
+          <MapIcon className="h-7 w-7" />
+          <p className="text-lg">Find directions</p>
+        </button>
+        {!!routeData && (
+          <>
+            <div className=" inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700">
+              <ClockIcon className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
+              <div className="px-2.5">
+                <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
+                  Duration
+                </h2>
+                <p className="text-2xl font-semibold">
+                  {convertToMinutes(routeData.duration)} minutes
+                </p>
               </div>
-              <div className="inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700">
-                <GiPathDistance className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
+            </div>
+            <div className="inline-flex h-fit w-full max-w-72 flex-row items-center gap-4 rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700">
+              <GiPathDistance className="h-9 w-9 text-emerald-500 dark:text-cyan-600" />
 
-                <div className="px-2.5">
-                  <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
-                    Distance
-                  </h2>
-                  <p className="text-2xl font-semibold">
-                    {convertToMiles(routeData.distance)} miles
-                  </p>
-                </div>
+              <div className="px-2.5">
+                <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
+                  Distance
+                </h2>
+                <p className="text-2xl font-semibold">
+                  {convertToMiles(routeData.distance)} miles
+                </p>
               </div>
-              <button
-                className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
-                  originData && destinationData
-                    ? "bg-emerald-500 dark:bg-cyan-600"
-                    : "bg-zinc-600"
-                }`}
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                onClick={async () => {
-                  await hangleGrabSongs();
-                }}
-                disabled={!routeData}
-                type="button"
-              >
-                <MusicalNoteIcon className="h-7 w-7" />
-                <p className="text-lg">Make Playlist</p>
-              </button>
-            </>
-          )}
-          {spotifyTracks.length !== 0 && (
-            <>
-              <ul className="flex w-full max-w-72 flex-col gap-5">
-                {spotifyTracks.map((track) => {
-                  return (
-                    <li
-                      key={track.id}
-                      className="relative flex flex-col rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700"
-                    >
-                      <p className="truncate text-lg font-semibold text-emerald-500 dark:text-cyan-600">
-                        {track.name}
+            </div>
+            <button
+              className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
+                originData && destinationData
+                  ? "bg-emerald-500 dark:bg-cyan-600"
+                  : "bg-zinc-600"
+              }`}
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
+              onClick={async () => {
+                await hangleGrabSongs();
+              }}
+              disabled={!routeData}
+              type="button"
+            >
+              <MusicalNoteIcon className="h-7 w-7" />
+              <p className="text-lg">Make Playlist</p>
+            </button>
+          </>
+        )}
+        {spotifyTracks.length !== 0 && (
+          <>
+            <ul className="flex w-full max-w-72 flex-col gap-5">
+              {spotifyTracks.map((track) => {
+                return (
+                  <li
+                    key={track.id}
+                    className="relative flex flex-col rounded-lg bg-zinc-200 p-5 dark:bg-zinc-700"
+                  >
+                    <p className="truncate text-lg font-semibold text-emerald-500 dark:text-cyan-600">
+                      {track.name}
+                    </p>
+
+                    <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {track.artists[0]?.name}
+                    </h2>
+                    <div className="flex flex-row items-center gap-1">
+                      <ClockIcon className="size-4 text-xs text-zinc-700/50 dark:text-zinc-300/50" />
+                      <p className="text-xs text-zinc-700/50 dark:text-zinc-300/50">
+                        {Math.round((track.duration_ms / 60000) * 100) / 100}
+                        min
                       </p>
-
-                      <h2 className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {track.artists[0]?.name}
-                      </h2>
-                      <div className="flex flex-row items-center gap-1">
-                        <ClockIcon className="size-4 text-xs text-zinc-700/50 dark:text-zinc-300/50" />
-                        <p className="text-xs text-zinc-700/50 dark:text-zinc-300/50">
-                          {Math.round((track.duration_ms / 60000) * 100) / 100}
-                          min
-                        </p>
-                      </div>
-                      {track.album.images[0]?.url ? (
-                        <div className="absolute inset-y-3 -right-2">
-                          <div className="relative size-20">
-                            <Image
-                              src={track.album.images[0].url}
-                              alt={track.album.name}
-                              fill
-                              sizes="100vw"
-                            />
-                          </div>
+                    </div>
+                    {track.album.images[0]?.url ? (
+                      <div className="absolute inset-y-3 -right-2">
+                        <div className="relative size-20">
+                          <Image
+                            src={track.album.images[0].url}
+                            alt={track.album.name}
+                            fill
+                            sizes="100vw"
+                          />
                         </div>
-                      ) : (
-                        ""
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-              <button
-                className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
-                  spotifyTracks
-                    ? "bg-emerald-500 dark:bg-cyan-600"
-                    : "bg-zinc-600"
-                }`}
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                onClick={async () => {
-                  await handleGeneratePlaylist();
-                }}
-                disabled={!spotifyTracks}
-                type="button"
-              >
-                <ArrowDownTrayIcon className="h-7 w-7" />
-                <p className="text-lg">Save Playlist</p>
-              </button>
-            </>
-          )}
-        </div>
-      </section>
-      <section className="h-full w-full grow">
+                      </div>
+                    ) : (
+                      ""
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <button
+              className={`align-center inline-flex w-48 flex-row gap-4 rounded-lg p-3 text-emerald-50 ${
+                spotifyTracks
+                  ? "bg-emerald-500 dark:bg-cyan-600"
+                  : "bg-zinc-600"
+              }`}
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
+              onClick={async () => {
+                await handleGeneratePlaylist();
+              }}
+              disabled={!spotifyTracks}
+              type="button"
+            >
+              <ArrowDownTrayIcon className="h-7 w-7" />
+              <p className="text-lg">Save Playlist</p>
+            </button>
+          </>
+        )}
+      </Transition>
+      <section className={`h-full w-screen`}>
         <Map
           mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
           mapLib={mapboxgl}
