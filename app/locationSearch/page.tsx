@@ -9,6 +9,7 @@ import {
   Map,
   NavigationControl,
   ScaleControl,
+  Source,
 } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import DeckGLOverlay from "./DeckGLOverlay";
@@ -36,7 +37,6 @@ import Image from "next/image";
 import along from "@turf/along";
 import type { DirectionsRoute } from "types/mapboxDirections";
 import type { Feature, Point } from "geojson";
-import { Transition } from "@headlessui/react";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SearchBox = dynamic(
   () =>
@@ -225,18 +225,10 @@ export default function LocationsSearchPage() {
           Plan
         </button>
       </div>
-      <Transition
-        show={!showSidebar}
-        enter="transition ease-in-out duration-300 transform"
-        enterFrom="-translate-x-full"
-        enterTo="translate-x-0"
-        leave="transition ease-in-out duration-300 transform"
-        leaveFrom="translate-x-0"
-        leaveTo="-translate-x-full"
-        as="section"
+      <section
         className={`${
           !showSidebar
-            ? "absolute z-10 flex w-5/6 min-w-96 max-w-xl flex-col items-center gap-12 overflow-y-auto bg-zinc-800 py-24 md:static md:w-1/4"
+            ? "absolute z-10 flex w-5/6 min-w-96 max-w-xl flex-col items-center gap-12 overflow-y-auto py-24 dark:bg-zinc-800 md:static md:w-1/4"
             : "hidden"
         } h-full`}
       >
@@ -390,7 +382,7 @@ export default function LocationsSearchPage() {
             </button>
           </>
         )}
-      </Transition>
+      </section>
       <section className={`h-full w-screen`}>
         <Map
           mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
@@ -407,7 +399,16 @@ export default function LocationsSearchPage() {
               : "mapbox://styles/mapbox/dark-v11"
           }
           ref={mapRef}
+          terrain={{ source: "mapbox-dem", exaggeration: 1.5 }}
         >
+          <Source
+            id="mapbox-dem"
+            type="raster-dem"
+            url="mapbox://mapbox.mapbox-terrain-dem-v1"
+            tileSize={512}
+            maxzoom={14}
+          />
+
           <DeckGLOverlay layers={[routeLayer]} />
           <GeolocateControl />
           <ScaleControl />
