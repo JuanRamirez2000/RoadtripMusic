@@ -2,7 +2,6 @@ import ThemeToggleSwitch from "./components/ThemeToggleSwitch";
 import "./globals.css";
 import Providers from "./providers";
 import "mapbox-gl/dist/mapbox-gl.css";
-import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 export default function RootLayout({
   children,

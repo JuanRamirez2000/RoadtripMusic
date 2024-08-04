@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import HeroImage from "./HeroImage";
+import HeroImage from "./components/HeroImage";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
@@ -23,14 +23,14 @@ export default function Home() {
           <div>
             <SignedOut>
               <SignInButton>
-                <button className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-zinc-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 md:w-64">
+                <button className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-emerald-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 dark:text-cyan-900 md:w-64">
                   Sign In To Spotify
                 </button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
               <Link
-                className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-zinc-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 md:w-64"
+                className="tranisition-all inline-flex w-32 items-center justify-center rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-emerald-900 duration-150 ease-in hover:scale-110 dark:bg-cyan-400 dark:text-cyan-900 md:w-64"
                 href={"/locationSearch"}
               >
                 Get Started

@@ -46,7 +46,9 @@ Other notable tech
     - [ ] Make it so that users can add more than one destination
     - [ ] Make it so that users can change their driving method
     - [ ] Look at MapBox directions API to see other useful options
-
+- [ ] Users should have a profile where they can view previous trips
+- [ ] Add a sidebar for options and tracking
+- [ ] Add NextJS layouts to better structure the content of the page
 
 
 ## Changes and optimizations needed
